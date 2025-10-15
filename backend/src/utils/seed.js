@@ -1,6 +1,6 @@
 import roleRepo from '../repositories/role.repository.js';
 import userRepo from '../repositories/user.repository.js';
-import User from '../models/user.model.js';
+import User from '../models/user/user.model.js';
 
 const DEFAULT_ROLES = [
   { name: 'admin', displayName: 'Admin', description: 'System administrator', isSystem: true },

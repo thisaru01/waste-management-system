@@ -1,4 +1,4 @@
-import Role from '../models/role.model.js';
+import Role from '../models/role/role.model.js';
 
 export class RoleRepository {
   async findByName(name) {

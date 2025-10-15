@@ -1,6 +1,6 @@
 import userRepo from '../repositories/user.repository.js';
 import roleRepo from '../repositories/role.repository.js';
-import User from '../models/user.model.js';
+import User from '../models/user/user.model.js';
 
 export class UserService {
   async createUser({ email, password, firstName, lastName, roleNames = [] }) {

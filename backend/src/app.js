@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import authRoutes from './routes/auth.routes.js';
-import userRoutes from './routes/user.routes.js';
-import roleRoutes from './routes/role.routes.js';
+import authRoutes from './routes/auth/auth.routes.js';
+import userRoutes from './routes/adminrouter/user.routes.js';
+import roleRoutes from './routes/adminrouter/role.routes.js';
 import { errorHandler } from './middleware/error.middleware.js';
 
 const app = express();
