@@ -6,6 +6,7 @@ import Login from './pages/Login.jsx';
 import Home from './pages/Home.jsx';
 import Admin from './pages/Admin.jsx';
 import AdminUsers from './pages/AdminUsers.jsx';
+import ComingSoon from './pages/ComingSoon.jsx';
 
 function App() {
   return (
@@ -22,6 +23,8 @@ function App() {
                   <Route path="users" element={<AdminUsers />} />
                 </Route>
               </Route>
+              {/* Placeholder pages for planned sections */}
+              <Route path="/coming-soon/:slug" element={<ComingSoon title="Coming Soon" />} />
             </Route>
           </Route>
         </Routes>

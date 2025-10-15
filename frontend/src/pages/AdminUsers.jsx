@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getRoles } from '../services/roles';
 import { createUser, listUsers } from '../services/users';
+import Button from '../components/ui/Button.jsx';
+import Input from '../components/ui/Input.jsx';
+import Select from '../components/ui/Select.jsx';
+import { Card, CardContent, CardHeader } from '../components/ui/Card.jsx';
+import { Table, TableContainer, TBody, THead, TH, TD } from '../components/ui/Table.jsx';
+import PageHeader from '../components/ui/PageHeader.jsx';
+import LayoutGrid from '../components/ui/LayoutGrid.jsx';
 
 export default function AdminUsers() {
   const [roles, setRoles] = useState([]);
@@ -58,135 +65,76 @@ export default function AdminUsers() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">User Management</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400">Create users and assign a user type (role).</p>
-      </div>
+      <PageHeader title="User Management" subtitle="Create users and assign a user type (role)." />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Add new user</h3>
-          <form onSubmit={onSubmit} className="mt-4 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">First name <span className="text-red-500">*</span></label>
-                <input
-                  name="firstName"
-                  value={form.firstName}
-                  onChange={onChange}
-                  required
-                  className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Jane"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Last name</label>
-                <input
-                  name="lastName"
-                  value={form.lastName}
-                  onChange={onChange}
-                  className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Doe"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Email <span className="text-red-500">*</span></label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={onChange}
-                required
-                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="jane@example.com"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Password <span className="text-red-500">*</span></label>
-              <input
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={onChange}
-                required
-                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Strong password"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">User type <span className="text-red-500">*</span></label>
-              <select
-                name="role"
-                value={form.role}
-                onChange={onChange}
-                required
-                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="" disabled>Select a role</option>
-                {roleOptions.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-
-            {error && (
-              <div className="rounded-md border border-red-200 bg-red-50 text-red-700 px-3 py-2 text-sm">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="rounded-md border border-green-200 bg-green-50 text-green-700 px-3 py-2 text-sm">
-                {success}
-              </div>
-            )}
-
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {loading ? 'Creating…' : 'Create user'}
-              </button>
-            </div>
-          </form>
-        </section>
-
-        <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Existing users</h3>
-          <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th scope="col" className="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Name</th>
-                  <th scope="col" className="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Email</th>
-                  <th scope="col" className="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Roles</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {users.map((u) => (
-                  <tr key={u._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                    <td className="px-4 py-2">
-                      {`${u.firstName || ''} ${u.lastName || ''}`.trim() || '—'}
-                    </td>
-                    <td className="px-4 py-2">{u.email}</td>
-                    <td className="px-4 py-2">{(u.roles || []).map((r) => r.displayName).join(', ') || '—'}</td>
-                  </tr>
-                ))}
-                {users.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">No users found.</td>
-                  </tr>
+      <LayoutGrid
+        left={
+          <Card>
+            <CardHeader title="Add new user" />
+            <CardContent>
+              <form onSubmit={onSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input name="firstName" value={form.firstName} onChange={onChange} required label="First name" placeholder="Jane" />
+                  <Input name="lastName" value={form.lastName} onChange={onChange} label="Last name" placeholder="Doe" />
+                </div>
+                <Input type="email" name="email" value={form.email} onChange={onChange} required label="Email" placeholder="jane@example.com" />
+                <Input type="password" name="password" value={form.password} onChange={onChange} required label="Password" placeholder="Strong password" />
+                <Select name="role" value={form.role} onChange={onChange} required label="User type">
+                  <option value="" disabled>Select a role</option>
+                  {roleOptions.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </Select>
+                {error && (
+                  <div className="rounded-md border border-red-200 bg-red-50 text-red-700 px-3 py-2 text-sm">{error}</div>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
+                {success && (
+                  <div className="rounded-md border border-green-200 bg-green-50 text-green-700 px-3 py-2 text-sm">{success}</div>
+                )}
+                <div className="pt-2">
+                  <Button type="submit" disabled={loading}>
+                    {loading ? 'Creating…' : 'Create user'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        }
+        right={
+          <Card>
+            <CardHeader title="Existing users" />
+            <CardContent>
+              <TableContainer>
+                <Table>
+                  <THead>
+                    <tr>
+                      <TH>Name</TH>
+                      <TH>Email</TH>
+                      <TH>Roles</TH>
+                    </tr>
+                  </THead>
+                  <TBody>
+                    {users.map((u) => (
+                      <tr key={u._id} className="hover:bg-gray-50">
+                        <TD>{`${u.firstName || ''} ${u.lastName || ''}`.trim() || '—'}</TD>
+                        <TD>{u.email}</TD>
+                        <TD>{(u.roles || []).map((r) => r.displayName).join(', ') || '—'}</TD>
+                      </tr>
+                    ))}
+                    {users.length === 0 && (
+                      <tr>
+                        <TD colSpan={3}>
+                          <div className="px-4 py-6 text-center text-gray-500">No users found.</div>
+                        </TD>
+                      </tr>
+                    )}
+                  </TBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        }
+      />
     </div>
   );
 }
