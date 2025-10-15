@@ -1,4 +1,4 @@
-import roleRepo from '../repositories/role.repository.js';
+import roleRepo from '../../repositories/role.repository.js';
 
 export const listRoles = async (_req, res) => {
   const roles = await roleRepo.list();
