@@ -2,57 +2,146 @@
 
 /* Always use light theme regardless of user system preference */
 :root {
-	color-scheme: light;
-	/* App color system (RGB values for easy alpha composition) */
-	--c-primary: 37 99 235;     /* blue-600 #2563eb */
-	--c-primary-700: 29 78 216; /* blue-700 #1d4ed8 */
-	--c-success: 22 163 74;     /* green-600 #16a34a */
-	--c-success-700: 21 128 61; /* green-700 #15803d */
-	--c-danger: 220 38 38;      /* red-600 #dc2626 */
-	--c-warning: 245 158 11;    /* amber-500 #f59e0b */
-	--c-info: 2 132 199;        /* sky-600 #0284c7 */
+  color-scheme: light;
+  /* App color system (RGB values for easy alpha composition) */
+  --c-primary: 37 99 235; /* blue-600 #2563eb */
+  --c-primary-700: 29 78 216; /* blue-700 #1d4ed8 */
+  --c-success: 22 163 74; /* green-600 #16a34a */
+  --c-success-700: 21 128 61; /* green-700 #15803d */
+  --c-danger: 220 38 38; /* red-600 #dc2626 */
+  --c-warning: 245 158 11; /* amber-500 #f59e0b */
+  --c-info: 2 132 199; /* sky-600 #0284c7 */
 
-	--c-text: 17 24 39;         /* gray-900 #111827 */
-	--c-muted: 107 114 128;     /* gray-500 #6b7280 */
-	--c-border: 229 231 235;    /* gray-200 #e5e7eb */
-	--c-bg: 250 250 250;        /* gray-50 #fafafa */
-	--c-surface: 255 255 255;   /* white #ffffff */
+  --c-text: 17 24 39; /* gray-900 #111827 */
+  --c-muted: 107 114 128; /* gray-500 #6b7280 */
+  --c-border: 229 231 235; /* gray-200 #e5e7eb */
+  --c-bg: 250 250 250; /* gray-50 #fafafa */
+  --c-surface: 255 255 255; /* white #ffffff */
 }
 
 /* Lightweight utility classes using the variables above */
-.text-primary { color: rgb(var(--c-primary)); }
-.text-success { color: rgb(var(--c-success)); }
-.text-danger { color: rgb(var(--c-danger)); }
-.text-warning { color: rgb(var(--c-warning)); }
-.text-info { color: rgb(var(--c-info)); }
-.text-muted { color: rgb(var(--c-muted)); }
-.text-foreground { color: rgb(var(--c-text)); }
+.text-primary {
+  color: rgb(var(--c-primary));
+}
+.text-success {
+  color: rgb(var(--c-success));
+}
+.text-danger {
+  color: rgb(var(--c-danger));
+}
+.text-warning {
+  color: rgb(var(--c-warning));
+}
+.text-info {
+  color: rgb(var(--c-info));
+}
+.text-muted {
+  color: rgb(var(--c-muted));
+}
+.text-foreground {
+  color: rgb(var(--c-text));
+}
 
-.bg-primary { background-color: rgb(var(--c-primary)); }
-.bg-success { background-color: rgb(var(--c-success)); }
-.bg-danger { background-color: rgb(var(--c-danger)); }
-.bg-warning { background-color: rgb(var(--c-warning)); }
-.bg-info { background-color: rgb(var(--c-info)); }
-.bg-surface { background-color: rgb(var(--c-surface)); }
-.bg-app { background-color: rgb(var(--c-bg)); }
+.bg-primary {
+  background-color: rgb(var(--c-primary));
+}
+.bg-success {
+  background-color: rgb(var(--c-success));
+}
+.bg-danger {
+  background-color: rgb(var(--c-danger));
+}
+.bg-warning {
+  background-color: rgb(var(--c-warning));
+}
+.bg-info {
+  background-color: rgb(var(--c-info));
+}
+.bg-surface {
+  background-color: rgb(var(--c-surface));
+}
+.bg-app {
+  background-color: rgb(var(--c-bg));
+}
 
-.border-primary { border-color: rgb(var(--c-primary)); }
-.border-success { border-color: rgb(var(--c-success)); }
-.border-danger { border-color: rgb(var(--c-danger)); }
-.border-warning { border-color: rgb(var(--c-warning)); }
-.border-info { border-color: rgb(var(--c-info)); }
-.border-subtle { border-color: rgb(var(--c-border)); }
+.border-primary {
+  border-color: rgb(var(--c-primary));
+}
+.border-success {
+  border-color: rgb(var(--c-success));
+}
+.border-danger {
+  border-color: rgb(var(--c-danger));
+}
+.border-warning {
+  border-color: rgb(var(--c-warning));
+}
+.border-info {
+  border-color: rgb(var(--c-info));
+}
+.border-subtle {
+  border-color: rgb(var(--c-border));
+}
 
 /* Hover helpers */
-.hover\:bg-primary:hover { background-color: rgb(var(--c-primary)); }
-.hover\:bg-success:hover { background-color: rgb(var(--c-success)); }
-.hover\:bg-danger:hover { background-color: rgb(var(--c-danger)); }
-.hover\:bg-warning:hover { background-color: rgb(var(--c-warning)); }
-.hover\:bg-info:hover { background-color: rgb(var(--c-info)); }
+.hover\:bg-primary:hover {
+  background-color: rgb(var(--c-primary));
+}
+.hover\:bg-success:hover {
+  background-color: rgb(var(--c-success));
+}
+.hover\:bg-danger:hover {
+  background-color: rgb(var(--c-danger));
+}
+.hover\:bg-warning:hover {
+  background-color: rgb(var(--c-warning));
+}
+.hover\:bg-info:hover {
+  background-color: rgb(var(--c-info));
+}
 
 /* Alpha helpers for overlays (example: background-color: rgba(var(--c-primary), 0.1)) */
-.bg-primary-10 { background-color: rgba(var(--c-primary), 0.10); }
-.bg-success-10 { background-color: rgba(var(--c-success), 0.10); }
-.bg-danger-10 { background-color: rgba(var(--c-danger), 0.10); }
-.bg-warning-10 { background-color: rgba(var(--c-warning), 0.10); }
-.bg-info-10 { background-color: rgba(var(--c-info), 0.10); }
+.bg-primary-10 {
+  background-color: rgba(var(--c-primary), 0.1);
+}
+.bg-success-10 {
+  background-color: rgba(var(--c-success), 0.1);
+}
+.bg-danger-10 {
+  background-color: rgba(var(--c-danger), 0.1);
+}
+.bg-warning-10 {
+  background-color: rgba(var(--c-warning), 0.1);
+}
+.bg-info-10 {
+  background-color: rgba(var(--c-info), 0.1);
+}
+
+/* Override browser autofill styling (Chrome, Edge, Safari) to avoid the yellow/blue background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: rgb(var(--c-text)) !important;
+  -webkit-box-shadow: 0 0 0px 1000px rgb(var(--c-surface)) inset !important;
+  box-shadow: 0 0 0px 1000px rgb(var(--c-surface)) inset !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* Firefox autofill neutralization */
+input:-moz-autofill,
+textarea:-moz-autofill,
+select:-moz-autofill {
+  box-shadow: 0 0 0px 1000px rgb(var(--c-surface)) inset !important;
+  -moz-text-fill-color: rgb(var(--c-text)) !important;
+}
+
+/* Small helper to ensure the login card height is consistent on small screens */
+.min-h-screen {
+  min-height: 100vh;
+}
