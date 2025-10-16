@@ -10,6 +10,7 @@ import AdminSensorSim from './pages/AdminSensorSim.jsx';
 import ComingSoon from './pages/ComingSoon.jsx';
 import Collection from './pages/Collection.jsx';
 import CollectionHistory from './pages/CollectionHistory.jsx';
+import PendingCollection from './pages/PendingCollection.jsx';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
               {/* Placeholder pages for planned sections */}
               <Route path="/coming-soon/:slug" element={<ComingSoon title="Coming Soon" />} />
               <Route path="/collections" element={<Collection />} />
+              <Route path="/collections/pending" element={<PendingCollection />} />
               <Route path="/collection-history" element={<CollectionHistory />} />
             </Route>
           </Route>

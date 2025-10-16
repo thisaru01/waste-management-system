@@ -28,6 +28,13 @@ export const NAV_ITEMS = [
     icon: 'collection',
     roles: ['authority', 'collector', 'admin'],
   },
+  // Authority-only quick access to pending collections
+  {
+    label: 'Pending collection',
+    to: '/collections/pending',
+    icon: 'collection',
+    roles: ['authority'],
+  },
   {
     label: 'Collection History',
     to: '/collection-history',
