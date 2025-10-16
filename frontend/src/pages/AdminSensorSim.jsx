@@ -49,8 +49,9 @@ export default function AdminSensorSim() {
     const payload = {};
     if (d.fillLevelPercent !== undefined && d.fillLevelPercent !== '') payload.fillLevelPercent = Number(d.fillLevelPercent);
     if (d.weightKg !== undefined && d.weightKg !== '') payload.weightKg = Number(d.weightKg);
+    if (d.status) payload.status = d.status;
     if (Object.keys(payload).length === 0) {
-      setError('Enter fill level and/or weight to update');
+      setError('Enter fill level and/or weight, or change status to update');
       return;
     }
     setLoading(true);
@@ -88,6 +89,7 @@ export default function AdminSensorSim() {
                   <TH>Capacity (L)</TH>
                   <TH>Fill</TH>
                   <TH>Weight (kg)</TH>
+                  <TH>Status</TH>
                   <TH>Update</TH>
                 </tr>
               </THead>
@@ -128,13 +130,26 @@ export default function AdminSensorSim() {
                       </div>
                     </TD>
                     <TD>
+                      <select
+                        className="mt-1 block w-full rounded-md border border-gray-300 bg-white p-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={draft[b._id]?.status ?? b.status ?? 'normal'}
+                        onChange={(e) => onDraftChange(b._id, 'status', e.target.value)}
+                      >
+                        <option value="normal">Normal</option>
+                        <option value="needs-collection">Needs collection</option>
+                        <option value="collected">Collected</option>
+                        <option value="unauthorized-collection">Unauthorized collection</option>
+                        <option value="overflow">Overflow</option>
+                      </select>
+                    </TD>
+                    <TD>
                       <Button onClick={() => onSubmitRow(b._id)} disabled={loading}>Apply</Button>
                     </TD>
                   </tr>
                 ))}
                 {bins.length === 0 && (
                   <tr>
-                    <TD colSpan={7}>
+                    <TD colSpan={8}>
                       <div className="px-4 py-6 text-center text-gray-500">No bins found.</div>
                     </TD>
                   </tr>

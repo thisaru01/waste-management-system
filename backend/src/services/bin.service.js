@@ -25,6 +25,7 @@ export class BinService {
       location: { description: locationDescription || '' },
       fillLevelPercent: 0,
       weightKg: 0,
+      status: 'normal',
       lastReadingAt: new Date(),
     };
     return binRepo.create(doc, session ? { session } : undefined);

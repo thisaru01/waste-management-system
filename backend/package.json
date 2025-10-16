@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "fix:indexes": "node src/scripts/fixIndexes.js"
   },
   "keywords": [],
   "author": "",

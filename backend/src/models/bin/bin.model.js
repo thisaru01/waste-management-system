@@ -28,6 +28,12 @@ const BinSchema = new Schema(
     owner: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     fillLevelPercent: { type: Number, default: 0, min: 0, max: 100 },
     weightKg: { type: Number, default: 0, min: 0 },
+    status: {
+      type: String,
+      enum: ['normal', 'needs-collection', 'collected', 'unauthorized-collection', 'overflow'],
+      default: 'normal',
+      index: true,
+    },
     lastReadingAt: { type: Date },
     notes: { type: String, default: '' },
   },

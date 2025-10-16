@@ -44,9 +44,9 @@ export async function seedDefaults() {
   const existingBins = await binRepo.list();
   if (!existingBins || existingBins.length === 0) {
     const samples = [
-      { code: 'PUB-001', type: 'public', capacityLiters: 120, location: { description: 'Main Street & 1st Ave' }, fillLevelPercent: 12, weightKg: 3.5 },
-      { code: 'PUB-002', type: 'public', capacityLiters: 240, location: { description: 'Central Park North Gate' }, fillLevelPercent: 86, weightKg: 12.1 },
-      { code: 'HOU-ACME-01', type: 'household', capacityLiters: 120, location: { description: '42 Galaxy Road' }, fillLevelPercent: 45, weightKg: 6.2 },
+      { code: 'PUB-001', type: 'public', capacityLiters: 120, location: { description: 'Main Street & 1st Ave' }, fillLevelPercent: 12, weightKg: 3.5, status: 'normal' },
+      { code: 'PUB-002', type: 'public', capacityLiters: 240, location: { description: 'Central Park North Gate' }, fillLevelPercent: 86, weightKg: 12.1, status: 'needs-collection' },
+      { code: 'HOU-ACME-01', type: 'household', capacityLiters: 120, location: { description: '42 Galaxy Road' }, fillLevelPercent: 45, weightKg: 6.2, status: 'normal' },
     ];
     for (const s of samples) {
       // eslint-disable-next-line no-await-in-loop
