@@ -1,16 +1,16 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext.jsx';
-import ProtectedRoute, { RoleGuard } from './routes/ProtectedRoute.jsx';
-import AppLayout from './layouts/AppLayout.jsx';
-import Login from './pages/Login.jsx';
-import Home from './pages/Home.jsx';
-import Admin from './pages/Admin.jsx';
-import AdminUsers from './pages/AdminUsers.jsx';
-import AdminSensorSim from './pages/AdminSensorSim.jsx';
-import ComingSoon from './pages/ComingSoon.jsx';
-import CollectorSchedule from './pages/CollectorSchedule.jsx';
-import Collection from './pages/Collection.jsx';
-import CollectionHistory from './pages/CollectionHistory.jsx';
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext.jsx";
+import ProtectedRoute, { RoleGuard } from "./routes/ProtectedRoute.jsx";
+import AppLayout from "./layouts/AppLayout.jsx";
+import Login from "./pages/Login.jsx";
+import Home from "./pages/Home.jsx";
+import Admin from "./pages/Admin.jsx";
+import AdminUsers from "./pages/AdminUsers.jsx";
+import AdminSensorSim from "./pages/AdminSensorSim.jsx";
+import ComingSoon from "./pages/ComingSoon.jsx";
+import CollectorSchedule from "./pages/CollectorSchedule.jsx";
+import Collection from "./pages/Collection.jsx";
+import CollectionHistory from "./pages/CollectionHistory.jsx";
 
 function App() {
   return (
@@ -29,11 +29,20 @@ function App() {
                 </Route>
               </Route>
               {/* Placeholder pages for planned sections */}
-              <Route path="/coming-soon/:slug" element={<ComingSoon title="Coming Soon" />} />
+              <Route
+                path="/coming-soon/:slug"
+                element={<ComingSoon title="Coming Soon" />}
+              />
               <Route path="/collections" element={<Collection />} />
-              <Route path="/collection-history" element={<CollectionHistory />} />
+              <Route
+                path="/collection-history"
+                element={<CollectionHistory />}
+              />
               <Route element={<RoleGuard roles={["collector"]} />}>
-                <Route path="/collector/schedule" element={<CollectorSchedule />} />
+                <Route
+                  path="/collector/schedule"
+                  element={<CollectorSchedule />}
+                />
               </Route>
             </Route>
           </Route>

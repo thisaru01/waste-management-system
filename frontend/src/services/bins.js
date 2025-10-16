@@ -1,11 +1,11 @@
-import API from './api';
+import API from "./api";
 
 /**
  * List all bins (admin only).
  * @returns {Promise<Array>} Array of bin documents
  */
 export async function listBins() {
-  const { data } = await API.get('/api/bins');
+  const { data } = await API.get("/api/bins");
   return data;
 }
 
@@ -14,7 +14,9 @@ export async function listBins() {
  * @param {number} threshold
  */
 export async function listFlaggedBins(threshold = 85) {
-  const { data } = await API.get(`/api/bins/flagged?threshold=${encodeURIComponent(threshold)}`);
+  const { data } = await API.get(
+    `/api/bins/flagged?threshold=${encodeURIComponent(threshold)}`
+  );
   return data;
 }
 
@@ -23,7 +25,7 @@ export async function listFlaggedBins(threshold = 85) {
  * @returns {Promise<Array>} Array of bin documents
  */
 export async function listAssignedBinsForCollector() {
-  const { data } = await API.get('/api/bins/assigned');
+  const { data } = await API.get("/api/bins/assigned");
   return data;
 }
 
@@ -50,4 +52,11 @@ export async function unassignBin(id) {
   return data;
 }
 
-export default { listBins, updateBinSensor, listFlaggedBins, listAssignedBinsForCollector, assignBin, unassignBin };
+export default {
+  listBins,
+  updateBinSensor,
+  listFlaggedBins,
+  listAssignedBinsForCollector,
+  assignBin,
+  unassignBin,
+};
