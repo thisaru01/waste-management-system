@@ -13,8 +13,8 @@
  */
 export function parseFill(val) {
   if (val === undefined || val === null) return NaN;
-  if (typeof val === 'number') return val;
-  if (typeof val === 'string') {
+  if (typeof val === "number") return val;
+  if (typeof val === "string") {
     const m = val.match(/-?\d+(?:\.\d+)?/);
     return m ? Number(m[0]) : NaN;
   }
@@ -29,12 +29,17 @@ export function parseFill(val) {
  * @returns {string}
  */
 export function getLocationKey(bin) {
-  if (!bin) return '';
+  if (!bin) return "";
   const loc = bin.location;
-  if (loc && typeof loc === 'object') {
-    return (loc.description || loc.name || loc.address || JSON.stringify(loc)).toString();
+  if (loc && typeof loc === "object") {
+    return (
+      loc.description ||
+      loc.name ||
+      loc.address ||
+      JSON.stringify(loc)
+    ).toString();
   }
-  return (loc ?? bin.code ?? '').toString();
+  return (loc ?? bin.code ?? "").toString();
 }
 
 /**
@@ -47,23 +52,33 @@ export function getLocationKey(bin) {
  * @returns {Array<Object>} transformed and sorted bins
  */
 export function transformAndSortBins(bins = [], threshold = 85) {
-  const mapped = (bins || []).map((b) => {
-    const raw = b.fillLevelPercent ?? b.fill ?? b.fillLevel ?? null;
-    const fillNumeric = parseFill(raw);
-    return { ...b, fillNumeric };
-  }).filter((b) => !Number.isNaN(b.fillNumeric) && b.fillNumeric >= threshold);
+  const mapped = (bins || [])
+    .map((b) => {
+      const raw = b.fillLevelPercent ?? b.fill ?? b.fillLevel ?? null;
+      const fillNumeric = parseFill(raw);
+      return { ...b, fillNumeric };
+    })
+    .filter((b) => {
+      // Only include bins that meet the fill threshold and whose status is 'needs-collection' or 'overflow'
+      const status = (b.status ?? "").toString().toLowerCase();
+      return (
+        !Number.isNaN(b.fillNumeric) &&
+        b.fillNumeric >= threshold &&
+        (status === "needs-collection" || status === "overflow")
+      );
+    });
 
   mapped.sort((a, c) => {
     const ka = getLocationKey(a);
     const kc = getLocationKey(c);
     const locCmp = ka.localeCompare(kc);
     if (locCmp !== 0) return locCmp;
-    const codeA = (a.code ?? '').toString();
-    const codeC = (c.code ?? '').toString();
+    const codeA = (a.code ?? "").toString();
+    const codeC = (c.code ?? "").toString();
     const codeCmp = codeA.localeCompare(codeC);
     if (codeCmp !== 0) return codeCmp;
-    const idA = (a._id ?? a.id ?? '').toString();
-    const idC = (c._id ?? c.id ?? '').toString();
+    const idA = (a._id ?? a.id ?? "").toString();
+    const idC = (c._id ?? c.id ?? "").toString();
     return idA.localeCompare(idC);
   });
 

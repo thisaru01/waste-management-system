@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
@@ -13,8 +13,8 @@ const BinSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ['household', 'business', 'public'],
-      default: 'public',
+      enum: ["household", "business", "public"],
+      default: "public",
       index: true,
     },
     capacityLiters: {
@@ -23,29 +23,40 @@ const BinSchema = new Schema(
       min: 1,
     },
     location: {
-      description: { type: String, default: '' },
+      description: { type: String, default: "" },
     },
-    owner: { type: Schema.Types.ObjectId, ref: 'User', default: null },
-  // Collector currently assigned to collect this bin
-  assignedCollector: { type: Schema.Types.ObjectId, ref: 'User', default: null },
-  assignedAt: { type: Date, default: null },
+    owner: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    // Collector currently assigned to collect this bin
+    assignedCollector: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    assignedAt: { type: Date, default: null },
     fillLevelPercent: { type: Number, default: 0, min: 0, max: 100 },
     weightKg: { type: Number, default: 0, min: 0 },
     status: {
       type: String,
-      enum: ['normal', 'needs-collection', 'collected', 'unauthorized-collection', 'overflow'],
-      default: 'normal',
+      enum: [
+        "normal",
+        "needs-collection",
+        "assigned",
+        "collected",
+        "unauthorized-collection",
+        "overflow",
+      ],
+      default: "normal",
       index: true,
     },
     lastReadingAt: { type: Date },
-    notes: { type: String, default: '' },
+    notes: { type: String, default: "" },
   },
   { timestamps: true }
 );
 
 // Helpful virtual: flagged if >= 85%
-BinSchema.virtual('flagged').get(function flagged() {
+BinSchema.virtual("flagged").get(function flagged() {
   return (this.fillLevelPercent || 0) >= 85;
 });
 
-export default mongoose.model('Bin', BinSchema);
+export default mongoose.model("Bin", BinSchema);
