@@ -4,7 +4,7 @@ import Button from '../components/ui/Button.jsx';
 import { Card, CardHeader, CardContent } from '../components/ui/Card.jsx';
 import { TableContainer, Table, THead, TBody, TH, TD } from '../components/ui/Table.jsx';
 import { listBins, listFlaggedBins } from '../services/bins';
-import { transformAndSortBins } from '../utils/binHelpers';
+import { transformAndSortBins, getLocationKey } from '../utils/binHelpers';
 
 function StatusBadge({ status }) {
   const cls =
@@ -52,6 +52,54 @@ export default function Collection() {
 
   // threshold for flagging bins
   const THRESHOLD = 85;
+
+  /**
+   * Handler invoked when the user clicks the Assign button for a bin row.
+   * Currently this is a small placeholder that prompts for a collector name
+   * and logs the assignment. Replace this with a proper modal or API call
+   * when integrating with the assignment backend.
+   *
+   * @param {Object} bin - the bin object being assigned
+   */
+  const assignCollector = (bin) => {
+    try {
+      const id = bin._id ?? bin.id ?? bin.code ?? 'unknown';
+      const collector = window.prompt(`Assign collector for bin ${id}`);
+      if (!collector) return;
+      // TODO: call API to persist assignment. This is a safe placeholder.
+      console.log('Assigning collector', { binId: id, collector });
+      // feedback for now — replace with non-blocking toast in future
+      // eslint-disable-next-line no-alert
+      alert(`Assigned ${collector} to bin ${id}`);
+    } catch (err) {
+      console.error('assignCollector error', err);
+      setError('Failed to assign collector');
+    }
+  };
+
+  /**
+   * Assign a collector to all bins at a given location key.
+   * This will prompt once and then apply the assignment to every bin
+   * that shares the same location (useful when multiple bins are colocated).
+   *
+   * @param {string} locKey - stable location key as returned by getLocationKey
+   */
+  const assignCollectorForLocation = (locKey) => {
+    try {
+      const items = bins.filter((b) => getLocationKey(b) === locKey);
+      if (!items || items.length === 0) return;
+      const ids = items.map((b) => b._id ?? b.id ?? b.code ?? '(unknown)');
+      const collector = window.prompt(`Assign collector for ${locKey} (bins: ${ids.join(', ')})`);
+      if (!collector) return;
+      // TODO: call API to persist assignment for all bins. Keeping placeholder for now.
+      console.log('Assigning collector to location', { locKey, ids, collector });
+      // eslint-disable-next-line no-alert
+      alert(`Assigned ${collector} to ${ids.length} bin(s) at ${locKey}`);
+    } catch (err) {
+      console.error('assignCollectorForLocation error', err);
+      setError('Failed to assign collector');
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -122,14 +170,39 @@ export default function Collection() {
                   </tr>
                 </THead>
                 <TBody>
-                  {bins.map((b, idx) => (
-                    <tr key={b._id ?? b.id ?? `${b.code ?? (b.location?.description ?? b.location ?? 'loc')}-${idx}`} className="border-t">
-                      <TD className="py-4">{b.location?.description ?? b.location ?? '—'}</TD>
-                      <TD className="py-4">{(b.fillNumeric ?? '–') + ' %'}</TD>
-                      <TD className="py-4">{b.type}</TD>
-                      <TD className="py-4 text-right"><StatusBadge status={(b.status && String(b.status).toLowerCase().includes('collected')) ? 'Collected' : 'Pending'} /></TD>
-                    </tr>
-                  ))}
+                  {(() => {
+                    let prevKey = null;
+                    return bins.map((b, idx) => {
+                      const locKey = getLocationKey(b);
+                      const showAssignForLocation = locKey !== prevKey;
+                      prevKey = locKey;
+                      return (
+                        <tr key={b._id ?? b.id ?? `${b.code ?? (b.location?.description ?? b.location ?? 'loc')}-${idx}`} className="border-t">
+                          <TD className="py-4">{b.location?.description ?? b.location ?? '—'}</TD>
+                          <TD className="py-4">{(b.fillNumeric ?? '–') + ' %'}</TD>
+                          <TD className="py-4">{b.type}</TD>
+                          <TD className="py-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <StatusBadge status={(b.status && String(b.status).toLowerCase().includes('collected')) ? 'Collected' : 'Pending'} />
+                              </div>
+                              <div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-sm"
+                                  onClick={() => assignCollector(b)}
+                                  aria-label={`Assign collector to bin ${b.code ?? b._id ?? ''}`}
+                                >
+                                  Assign
+                                </Button>
+                              </div>
+                            </div>
+                          </TD>
+                        </tr>
+                      );
+                    });
+                  })()}
                   {!loading && !error && bins.length === 0 && (
                     <tr>
                       <TD colSpan={4} className="py-6 text-center text-gray-500">No flagged bins found.</TD>
