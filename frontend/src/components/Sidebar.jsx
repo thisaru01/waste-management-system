@@ -38,6 +38,14 @@ function Icon({ name, className = 'w-5 h-5' }) {
       return (
         <svg className={`${className} ${base}`} viewBox="0 0 24 24" fill="none" strokeWidth="1.8"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V22a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 5 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.49A1.65 1.65 0 0 0 5 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 3.1V3a2 2 0 1 1 4 0v.09c0 .67.39 1.28 1 1.51.4.17.87.1 1.22-.17l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.27.35-.34.82-.17 1.22.23.61.84 1 1.51 1H21a2 2 0 1 1 0 4h-.09c-.67 0-1.28.39-1.51 1z"/></svg>
       );
+    case 'beaker':
+      return (
+        <svg className={`${className} ${base}`} viewBox="0 0 24 24" fill="none" strokeWidth="1.8">
+          <path d="M9 3v6l-5 8a3 3 0 0 0 2.55 4.5h10.9A3 3 0 0 0 20 17l-5-8V3"/>
+          <path d="M9 9h6"/>
+          <path d="M7 17h10"/>
+        </svg>
+      );
     default:
       return null;
   }
@@ -50,7 +58,7 @@ export default function Sidebar({ variant = 'desktop', onNavigate } = {}) {
   const containerClass =
     variant === 'mobile'
       ? 'flex w-64 shrink-0 border-r border-gray-200 bg-white h-full'
-      : 'hidden md:flex md:w-60 lg:w-64 shrink-0 border-r border-gray-200 bg-white sticky top-14 self-start h-[calc(100vh-3.5rem)]';
+    : 'hidden md:flex md:w-60 lg:w-64 shrink-0 border-r border-gray-200 bg-white sticky top-14 self-start h-[calc(100vh-3.5rem)] z-30';
 
   return (
     <aside className={containerClass}>

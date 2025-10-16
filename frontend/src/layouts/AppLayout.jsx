@@ -26,8 +26,9 @@ export default function AppLayout() {
   }, [mobileOpen]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+  <div className="min-h-screen bg-gray-50 pt-14">
+      {/* Sticky top header - fixed, does not scroll with page content */}
+      <header className="fixed inset-x-0 top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-6">
             {/* Mobile menu button */}
@@ -55,28 +56,10 @@ export default function AppLayout() {
           </div>
         </div>
       </header>
+
       <div className="flex">
         <Sidebar />
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
-          {/* Top utility row */}
-          <div className="mb-4 flex items-center justify-between">
-            <div className="relative w-full max-w-md">
-              <input
-                className="w-full rounded-md border border-gray-300 bg-white pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="Search"
-              />
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              </div>
-            </div>
-            <div className="ml-4 flex items-center gap-2">
-              <button className="rounded-full p-2 text-gray-500 hover:bg-gray-100" aria-label="Notifications">
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 17h5l-1.405-1.405C18.79 14.79 18 13.395 18 12V8a6 6 0 10-12 0v4c0 1.395-.79 2.79-1.595 3.595L3 17h5"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-              </button>
-              <div className="h-8 w-8 rounded-full bg-gray-200" />
-            </div>
-          </div>
-
           <Outlet />
         </main>
       </div>

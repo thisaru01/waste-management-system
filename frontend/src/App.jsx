@@ -6,6 +6,7 @@ import Login from './pages/Login.jsx';
 import Home from './pages/Home.jsx';
 import Admin from './pages/Admin.jsx';
 import AdminUsers from './pages/AdminUsers.jsx';
+import AdminSensorSim from './pages/AdminSensorSim.jsx';
 import ComingSoon from './pages/ComingSoon.jsx';
 import Collection from './pages/Collection.jsx';
 import CollectionHistory from './pages/CollectionHistory.jsx';
@@ -23,6 +24,7 @@ function App() {
                 <Route path="/admin" element={<Admin />}>
                   <Route index element={<AdminUsers />} />
                   <Route path="users" element={<AdminUsers />} />
+                  <Route path="sensors" element={<AdminSensorSim />} />
                 </Route>
               </Route>
               {/* Placeholder pages for planned sections */}

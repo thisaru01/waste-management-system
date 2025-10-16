@@ -7,7 +7,12 @@ export class UserRepository {
     return query.populate('roles');
   }
 
-  async create(user) {
+  async create(user, options) {
+    if (options?.session) {
+      const doc = new User(user);
+      await doc.save(options);
+      return doc;
+    }
     return User.create(user);
   }
 

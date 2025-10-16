@@ -6,13 +6,12 @@ import Input from '../components/ui/Input.jsx';
 import Select from '../components/ui/Select.jsx';
 import { Card, CardContent, CardHeader } from '../components/ui/Card.jsx';
 import { Table, TableContainer, TBody, THead, TH, TD } from '../components/ui/Table.jsx';
-import PageHeader from '../components/ui/PageHeader.jsx';
 import LayoutGrid from '../components/ui/LayoutGrid.jsx';
 
 export default function AdminUsers() {
   const [roles, setRoles] = useState([]);
   const [users, setUsers] = useState([]);
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', role: '' });
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', role: '', binLocation: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -49,11 +48,15 @@ export default function AdminUsers() {
       setError('First name, email, password and role are required');
       return;
     }
+    if (form.role === 'bin-owner' && !form.binLocation.trim()) {
+      setError('Bin location is required when creating a Bin Owner');
+      return;
+    }
     setLoading(true);
     try {
       await createUser(form);
       setSuccess('User created');
-      setForm({ firstName: '', lastName: '', email: '', password: '', role: '' });
+      setForm({ firstName: '', lastName: '', email: '', password: '', role: '', binLocation: '' });
       const refreshed = await listUsers();
       setUsers(refreshed);
     } catch (err) {
@@ -65,7 +68,6 @@ export default function AdminUsers() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <PageHeader title="User Management" subtitle="Create users and assign a user type (role)." />
 
       <LayoutGrid
         left={
@@ -85,6 +87,16 @@ export default function AdminUsers() {
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </Select>
+                {form.role === 'bin-owner' && (
+                  <Input
+                    name="binLocation"
+                    value={form.binLocation}
+                    onChange={onChange}
+                    required
+                    label="Bin location"
+                    placeholder="e.g., 42 Galaxy Road"
+                  />
+                )}
                 {error && (
                   <div className="rounded-md border border-red-200 bg-red-50 text-red-700 px-3 py-2 text-sm">{error}</div>
                 )}

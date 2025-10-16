@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth/auth.routes.js";
 import userRoutes from "./routes/adminrouter/user.routes.js";
 import roleRoutes from "./routes/auth/role.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
+import binRoutes from './routes/bin/bin.routes.js';
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/roles", roleRoutes);
+app.use('/api/bins', binRoutes);
 
 // Error handler
 app.use(errorHandler);
