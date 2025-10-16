@@ -15,6 +15,12 @@ export const NAV_ITEMS = [
     icon: 'users',
     roles: ['admin'],
   },
+  {
+    label: 'Sensor Simulation',
+    to: '/admin/sensors',
+    icon: 'beaker',
+    roles: ['admin'],
+  },
   // Example placeholders for future areas; adjust role targeting as needed
   {
     label: 'Collections',
