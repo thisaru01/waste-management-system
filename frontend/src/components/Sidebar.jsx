@@ -50,7 +50,7 @@ export default function Sidebar({ variant = 'desktop', onNavigate } = {}) {
   const containerClass =
     variant === 'mobile'
       ? 'flex w-64 shrink-0 border-r border-gray-200 bg-white h-full'
-      : 'hidden md:flex md:w-60 lg:w-64 shrink-0 border-r border-gray-200 bg-white sticky top-14 self-start h-[calc(100vh-3.5rem)]';
+    : 'hidden md:flex md:w-60 lg:w-64 shrink-0 border-r border-gray-200 bg-white sticky top-14 self-start h-[calc(100vh-3.5rem)] z-30';
 
   return (
     <aside className={containerClass}>

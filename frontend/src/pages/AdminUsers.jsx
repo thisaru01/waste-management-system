@@ -6,7 +6,6 @@ import Input from '../components/ui/Input.jsx';
 import Select from '../components/ui/Select.jsx';
 import { Card, CardContent, CardHeader } from '../components/ui/Card.jsx';
 import { Table, TableContainer, TBody, THead, TH, TD } from '../components/ui/Table.jsx';
-import PageHeader from '../components/ui/PageHeader.jsx';
 import LayoutGrid from '../components/ui/LayoutGrid.jsx';
 
 export default function AdminUsers() {
@@ -65,7 +64,6 @@ export default function AdminUsers() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <PageHeader title="User Management" subtitle="Create users and assign a user type (role)." />
 
       <LayoutGrid
         left={
