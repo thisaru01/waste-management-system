@@ -29,7 +29,7 @@ const PaymentSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'paid', 'overdue', 'cancelled'],
+      enum: ['pending', 'paid', 'overdue', 'cancelled', 'refunded', 'partially_refunded'],
       default: 'pending',
       index: true,
     },
@@ -44,7 +44,7 @@ const PaymentSchema = new Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ['cash', 'card', 'bank_transfer', 'online', null],
+      enum: ['cash', 'card', 'bank_transfer', 'online', 'stripe', null],
       default: null,
     },
     description: {
@@ -57,6 +57,47 @@ const PaymentSchema = new Schema(
       trim: true,
       default: '',
     },
+    // Stripe Integration Fields
+    stripePaymentIntentId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    stripeClientSecret: {
+      type: String,
+      default: null,
+    },
+    transactionId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    // Pickup Reference
+    pickup: {
+      type: Schema.Types.ObjectId,
+      ref: 'Pickup',
+      default: null,
+      index: true,
+    },
+    // Refund Information
+    refundAmount: {
+      type: Number,
+      default: 0,
+      min: [0, 'Refund amount must be positive'],
+    },
+    refundReason: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    refundDate: {
+      type: Date,
+      default: null,
+    },
+    stripeRefundId: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -66,6 +107,8 @@ const PaymentSchema = new Schema(
 // Compound index for efficient querying
 PaymentSchema.index({ resident: 1, status: 1 });
 PaymentSchema.index({ resident: 1, dueDate: -1 });
+PaymentSchema.index({ pickup: 1 });
+PaymentSchema.index({ stripePaymentIntentId: 1 });
 
 // Virtual for calculating if overdue
 PaymentSchema.virtual('isOverdue').get(function () {

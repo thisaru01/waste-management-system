@@ -1,6 +1,7 @@
 import pickupRepo from '../repositories/pickup.repository.js';
 import PickupValidator from '../utils/pickupValidator.js';
 import { NotFoundError, UnauthorizedError, BusinessRuleError } from '../utils/errors.js';
+import paymentService from './payment.service.js';
 
 /**
  * Pickup Service
@@ -13,7 +14,7 @@ export class PickupService {
   /**
    * Schedule a new pickup for a resident
    * @param {Object} data - Pickup data
-   * @returns {Promise<Object>} Created pickup
+   * @returns {Promise<Object>} Created pickup with payment
    */
   async schedulePickup({ residentId, date, itemType, itemWeight, notes }) {
     // Validate required fields
@@ -32,7 +33,27 @@ export class PickupService {
       status: 'scheduled',
     });
 
-    return pickup;
+    // Get pickup fee from environment or use default
+    const pickupFee = parseFloat(process.env.PICKUP_FEE) || 25.00;
+
+    // Create payment for the pickup
+    const payment = await paymentService.createPickupPayment({
+      residentId,
+      pickupId: pickup._id,
+      amount: pickupFee,
+      description: `Scheduled pickup - ${itemType}`,
+    });
+
+    // Return pickup with payment information
+    return {
+      ...pickup,
+      payment: {
+        id: payment._id,
+        amount: payment.amount,
+        status: payment.status,
+        invoiceNumber: payment.invoiceNumber,
+      },
+    };
   }
 
   /**
@@ -126,7 +147,7 @@ export class PickupService {
    * Cancel a pickup (resident can cancel their own)
    * @param {string} id - Pickup ID
    * @param {string} residentId - Resident ID
-   * @returns {Promise<Object>} Cancelled pickup
+   * @returns {Promise<Object>} Cancelled pickup with refund info
    */
   async cancelPickup(id, residentId) {
     // Get pickup
@@ -142,8 +163,27 @@ export class PickupService {
       throw new BusinessRuleError('Cannot cancel completed pickups');
     }
 
+    // Cannot cancel already cancelled pickups
+    if (pickup.status === 'cancelled') {
+      throw new BusinessRuleError('Pickup is already cancelled');
+    }
+
     // Update status to cancelled
-    return pickupRepo.updateStatus(id, 'cancelled');
+    const cancelledPickup = await pickupRepo.updateStatus(id, 'cancelled');
+
+    // Process refund for the associated payment
+    let refundInfo = null;
+    try {
+      refundInfo = await paymentService.processPickupCancellationRefund(id, 'Pickup cancelled by resident');
+    } catch (error) {
+      // Log error but don't fail the cancellation
+      console.error('Failed to process refund:', error.message);
+    }
+
+    return {
+      ...cancelledPickup,
+      refund: refundInfo,
+    };
   }
 }
 

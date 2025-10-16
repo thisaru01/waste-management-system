@@ -11,11 +11,20 @@ import adminPickupRoutes from './routes/adminrouter/pickup.routes.js';
 import residentPaymentRoutes from './routes/residentRoutes/payment.routes.js';
 import adminPaymentRoutes from './routes/adminrouter/payment.routes.js';
 import settingsRoutes from './routes/residentRoutes/settings.routes.js';
+import stripeRoutes from './routes/stripe/stripe.routes.js';
 
 const app = express();
 
 // Middlewares
 app.use(cors());
+
+// Stripe webhook route MUST be before express.json() to get raw body
+// This is required for Stripe signature verification
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req, res, next) => {
+  req.rawBody = req.body;
+  next();
+});
+
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -34,6 +43,7 @@ app.use('/api/admin/pickups', adminPickupRoutes);
 app.use('/api/payments', residentPaymentRoutes);
 app.use('/api/admin/payments', adminPaymentRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/stripe', stripeRoutes);
 
 // Error handler
 app.use(errorHandler);

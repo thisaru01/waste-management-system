@@ -42,7 +42,7 @@ export class PaymentValidator {
    * Validate payment method
    */
   static validatePaymentMethod(method) {
-    const validMethods = ['cash', 'card', 'bank_transfer', 'online'];
+    const validMethods = ['cash', 'card', 'bank_transfer', 'online', 'stripe'];
 
     if (method && !validMethods.includes(method)) {
       throw new ValidationError(

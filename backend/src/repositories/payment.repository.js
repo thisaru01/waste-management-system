@@ -115,6 +115,71 @@ export class PaymentRepository {
   }
 
   /**
+   * Find payment by pickup ID
+   */
+  async findByPickupId(pickupId) {
+    return Payment.findOne({ pickup: pickupId })
+      .populate('resident', 'firstName lastName email')
+      .lean();
+  }
+
+  /**
+   * Find payment by Stripe payment intent ID
+   */
+  async findByStripePaymentIntentId(paymentIntentId) {
+    return Payment.findOne({ stripePaymentIntentId: paymentIntentId })
+      .populate('resident', 'firstName lastName email')
+      .lean();
+  }
+
+  /**
+   * Update payment with Stripe details
+   */
+  async updateStripeDetails(id, stripeData) {
+    return Payment.findByIdAndUpdate(
+      id,
+      {
+        stripePaymentIntentId: stripeData.paymentIntentId,
+        stripeClientSecret: stripeData.clientSecret,
+        transactionId: stripeData.transactionId,
+      },
+      { new: true, runValidators: true }
+    ).lean();
+  }
+
+  /**
+   * Process refund for payment
+   */
+  async processRefund(id, refundData) {
+    const updateData = {
+      status: refundData.isFullRefund ? 'refunded' : 'partially_refunded',
+      refundAmount: refundData.amount,
+      refundReason: refundData.reason,
+      refundDate: new Date(),
+      stripeRefundId: refundData.stripeRefundId,
+    };
+
+    return Payment.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    }).lean();
+  }
+
+  /**
+   * Cancel payment
+   */
+  async cancel(id, reason = null) {
+    return Payment.findByIdAndUpdate(
+      id,
+      {
+        status: 'cancelled',
+        ...(reason && { refundReason: reason }),
+      },
+      { new: true, runValidators: true }
+    ).lean();
+  }
+
+  /**
    * Delete payment
    */
   async delete(id) {

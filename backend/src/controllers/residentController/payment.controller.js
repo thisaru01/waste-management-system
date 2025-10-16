@@ -88,3 +88,52 @@ export const processPayment = async (req, res) => {
     });
   }
 };
+
+/**
+ * Create Stripe payment intent
+ * @route POST /api/payments/:id/stripe/payment-intent
+ */
+export const createPaymentIntent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const residentId = req.user.sub;
+
+    const paymentIntent = await paymentService.createStripePaymentIntent(id, residentId);
+    return res.json(paymentIntent);
+  } catch (err) {
+    const statusCode = err.statusCode || 500;
+    return res.status(statusCode).json({
+      message: err.message,
+      error: err.name,
+    });
+  }
+};
+
+/**
+ * Get payment by pickup ID
+ * @route GET /api/payments/pickup/:pickupId
+ */
+export const getPaymentByPickup = async (req, res) => {
+  try {
+    const { pickupId } = req.params;
+    const residentId = req.user.sub;
+
+    const payment = await paymentService.getPaymentByPickupId(pickupId);
+
+    // Verify ownership
+    if (payment.resident._id.toString() !== residentId.toString()) {
+      return res.status(403).json({
+        message: 'Access denied',
+        error: 'Forbidden',
+      });
+    }
+
+    return res.json(payment);
+  } catch (err) {
+    const statusCode = err.statusCode || 500;
+    return res.status(statusCode).json({
+      message: err.message,
+      error: err.name,
+    });
+  }
+};

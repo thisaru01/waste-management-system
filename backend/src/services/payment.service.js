@@ -1,6 +1,8 @@
 import paymentRepo from '../repositories/payment.repository.js';
 import PaymentValidator from '../utils/paymentValidator.js';
 import { NotFoundError, UnauthorizedError, BusinessRuleError } from '../utils/errors.js';
+import stripeService from './stripe.service.js';
+import mongoose from 'mongoose';
 
 /**
  * Payment Service
@@ -220,6 +222,223 @@ export class PaymentService {
     }
 
     return payments;
+  }
+
+  /**
+   * Create a payment for a pickup
+   * @param {Object} params - Payment parameters
+   * @returns {Promise<Object>} Created payment
+   */
+  async createPickupPayment({ residentId, pickupId, amount, description }) {
+    // Generate invoice number
+    const invoiceNumber = PaymentValidator.generateInvoiceNumber();
+
+    // Set due date (7 days from now by default)
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 7);
+
+    // Create payment
+    const payment = await this.createPayment({
+      residentId,
+      amount,
+      dueDate,
+      description,
+      invoiceNumber,
+    });
+
+    // Link payment to pickup
+    const updatedPayment = await paymentRepo.update(payment._id, {
+      pickup: pickupId,
+    });
+
+    return updatedPayment;
+  }
+
+  /**
+   * Create a Stripe payment intent for a payment
+   * @param {string} paymentId - Payment ID
+   * @param {string} residentId - Resident ID (for authorization)
+   * @returns {Promise<Object>} Payment with client secret
+   */
+  async createStripePaymentIntent(paymentId, residentId) {
+    // Get payment
+    const payment = await this.getPaymentById(paymentId);
+
+    // Verify ownership
+    if (payment.resident._id.toString() !== residentId.toString()) {
+      throw new UnauthorizedError('You can only pay for your own invoices');
+    }
+
+    // Check if payment is already paid or cancelled
+    if (payment.status === 'paid') {
+      throw new BusinessRuleError('Payment is already paid');
+    }
+
+    if (payment.status === 'cancelled') {
+      throw new BusinessRuleError('Cannot pay cancelled invoice');
+    }
+
+    if (payment.status === 'refunded') {
+      throw new BusinessRuleError('Cannot pay refunded invoice');
+    }
+
+    // Check if payment intent already exists
+    if (payment.stripePaymentIntentId && payment.stripeClientSecret) {
+      // Verify the payment intent is still valid
+      try {
+        const existingIntent = await stripeService.retrievePaymentIntent(payment.stripePaymentIntentId);
+        if (existingIntent.status !== 'succeeded' && existingIntent.status !== 'canceled') {
+          return {
+            clientSecret: payment.stripeClientSecret,
+            paymentIntentId: payment.stripePaymentIntentId,
+            amount: payment.amount,
+          };
+        }
+      } catch (error) {
+        // Payment intent doesn't exist or is invalid, create a new one
+      }
+    }
+
+    // Create Stripe payment intent
+    const paymentIntent = await stripeService.createPaymentIntent({
+      amount: payment.amount,
+      description: payment.description,
+      metadata: {
+        paymentId: payment._id.toString(),
+        invoiceNumber: payment.invoiceNumber,
+        residentId: residentId.toString(),
+      },
+    });
+
+    // Update payment with Stripe details
+    await paymentRepo.updateStripeDetails(payment._id, {
+      paymentIntentId: paymentIntent.id,
+      clientSecret: paymentIntent.clientSecret,
+      transactionId: null, // Will be set when payment succeeds
+    });
+
+    return {
+      clientSecret: paymentIntent.clientSecret,
+      paymentIntentId: paymentIntent.id,
+      amount: payment.amount,
+    };
+  }
+
+  /**
+   * Handle successful Stripe payment
+   * @param {string} paymentIntentId - Stripe payment intent ID
+   * @param {Object} paymentDetails - Payment details from Stripe
+   * @returns {Promise<Object>} Updated payment
+   */
+  async handleStripePaymentSuccess(paymentIntentId, paymentDetails) {
+    // Find payment by Stripe payment intent ID
+    const payment = await paymentRepo.findByStripePaymentIntentId(paymentIntentId);
+
+    if (!payment) {
+      throw new NotFoundError('Payment');
+    }
+
+    // Check if already processed
+    if (payment.status === 'paid') {
+      return payment;
+    }
+
+    // Mark as paid
+    const updatedPayment = await paymentRepo.update(payment._id, {
+      status: 'paid',
+      paidDate: new Date(),
+      paymentMethod: 'stripe',
+      transactionId: paymentDetails.chargeId || paymentIntentId,
+    });
+
+    return updatedPayment;
+  }
+
+  /**
+   * Process refund for pickup cancellation
+   * @param {string} pickupId - Pickup ID
+   * @param {string} reason - Cancellation reason
+   * @returns {Promise<Object>} Refund information
+   */
+  async processPickupCancellationRefund(pickupId, reason) {
+    // Find payment by pickup ID
+    const payment = await paymentRepo.findByPickupId(pickupId);
+
+    if (!payment) {
+      throw new NotFoundError('Payment for this pickup not found');
+    }
+
+    // Check payment status
+    if (payment.status === 'cancelled') {
+      throw new BusinessRuleError('Payment is already cancelled');
+    }
+
+    if (payment.status === 'refunded') {
+      throw new BusinessRuleError('Payment is already refunded');
+    }
+
+    // If payment was not yet paid, just cancel it
+    if (payment.status === 'pending' || payment.status === 'overdue') {
+      const cancelledPayment = await paymentRepo.cancel(payment._id, reason);
+      return {
+        status: 'cancelled',
+        message: 'Payment cancelled - no charge was made',
+      };
+    }
+
+    // If payment was paid via Stripe, process refund
+    if (payment.status === 'paid' && payment.stripePaymentIntentId) {
+      try {
+        const refund = await stripeService.createRefund({
+          paymentIntentId: payment.stripePaymentIntentId,
+          reason: 'requested_by_customer',
+        });
+
+        // Update payment with refund details
+        const refundedPayment = await paymentRepo.processRefund(payment._id, {
+          amount: refund.amount,
+          reason,
+          stripeRefundId: refund.id,
+          isFullRefund: refund.amount === payment.amount,
+        });
+
+        return {
+          status: 'refunded',
+          amount: refund.amount,
+          refundId: refund.id,
+          message: 'Refund processed successfully',
+        };
+      } catch (error) {
+        throw new BusinessRuleError(`Failed to process refund: ${error.message}`);
+      }
+    }
+
+    // For other payment methods (cash, card, etc.), just mark as refunded
+    const refundedPayment = await paymentRepo.processRefund(payment._id, {
+      amount: payment.amount,
+      reason,
+      stripeRefundId: null,
+      isFullRefund: true,
+    });
+
+    return {
+      status: 'refunded',
+      amount: payment.amount,
+      message: 'Payment marked as refunded - manual refund required',
+    };
+  }
+
+  /**
+   * Get payment by pickup ID
+   * @param {string} pickupId - Pickup ID
+   * @returns {Promise<Object>} Payment
+   */
+  async getPaymentByPickupId(pickupId) {
+    const payment = await paymentRepo.findByPickupId(pickupId);
+    if (!payment) {
+      throw new NotFoundError('Payment');
+    }
+    return payment;
   }
 }
 

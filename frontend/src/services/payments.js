@@ -66,6 +66,30 @@ export async function cancelPayment(id) {
   return data;
 }
 
+/**
+ * Get payment for a specific pickup
+ */
+export async function getPaymentByPickup(pickupId) {
+  const { data } = await API.get(`/api/payments/pickup/${pickupId}`);
+  return data;
+}
+
+/**
+ * Create Stripe payment intent
+ */
+export async function createStripePaymentIntent(paymentId) {
+  const { data } = await API.post(`/api/payments/${paymentId}/stripe/payment-intent`);
+  return data;
+}
+
+/**
+ * Get Stripe configuration (publishable key)
+ */
+export async function getStripeConfig() {
+  const { data } = await API.get('/api/stripe/config');
+  return data;
+}
+
 export default {
   getMyPayments,
   getOutstandingBalance,
@@ -75,4 +99,7 @@ export default {
   getAllPayments,
   updatePayment,
   cancelPayment,
+  getPaymentByPickup,
+  createStripePaymentIntent,
+  getStripeConfig,
 };
