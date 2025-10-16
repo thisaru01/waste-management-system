@@ -5,10 +5,16 @@ import { listFlaggedBins } from '../services/bins';
 import { transformAndSortBins } from '../utils/binHelpers';
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const [overflowAlert, setOverflowAlert] = useState(false);
-
   useEffect(() => {
+    // Only fetch and show the overflow alert for users with the authority role.
+    if (!hasRole || !hasRole('authority')) {
+      // ensure the alert is cleared for non-authority users
+      setOverflowAlert(false);
+      return undefined;
+    }
+
     let mounted = true;
     (async () => {
       try {
@@ -23,7 +29,7 @@ export default function Home() {
       }
     })();
     return () => { mounted = false; };
-  }, []);
+  }, [hasRole]);
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold text-gray-900">Welcome</h1>
