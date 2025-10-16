@@ -1,4 +1,5 @@
 import Payment from '../models/payment/payment.model.js';
+import mongoose from 'mongoose';
 
 /**
  * Payment Repository
@@ -80,10 +81,22 @@ export class PaymentRepository {
    * Get outstanding balance for a resident
    */
   async getOutstandingBalance(residentId) {
+    // First, let's see all payments for debugging
+    const allPayments = await Payment.find({ resident: residentId });
+    console.log('All payments for resident:', {
+      residentId,
+      count: allPayments.length,
+      statuses: allPayments.map(p => ({ id: p._id, status: p.status, amount: p.amount }))
+    });
+    
+    // IMPORTANT: When using aggregation, Mongoose will NOT cast string IDs.
+    // Convert residentId to ObjectId to match stored refs.
+    const residentObjectId = new mongoose.Types.ObjectId(residentId);
+
     const result = await Payment.aggregate([
       {
         $match: {
-          resident: residentId,
+          resident: residentObjectId,
           status: { $in: ['pending', 'overdue'] },
         },
       },
@@ -95,7 +108,10 @@ export class PaymentRepository {
       },
     ]);
 
-    return result.length > 0 ? result[0].total : 0;
+    const balance = result.length > 0 ? result[0].total : 0;
+    console.log('Outstanding balance result:', { residentId, balance, matchedGroups: result.length });
+    
+    return balance;
   }
 
   /**
@@ -118,7 +134,10 @@ export class PaymentRepository {
    * Find payment by pickup ID
    */
   async findByPickupId(pickupId) {
-    return Payment.findOne({ pickup: pickupId })
+    const ObjectId = mongoose.Types.ObjectId;
+    const id = typeof pickupId === 'string' ? new ObjectId(pickupId) : pickupId;
+    
+    return Payment.findOne({ pickup: id })
       .populate('resident', 'firstName lastName email')
       .lean();
   }

@@ -361,12 +361,22 @@ export class PaymentService {
    * @returns {Promise<Object>} Refund information
    */
   async processPickupCancellationRefund(pickupId, reason) {
+    console.log('🔍 Processing refund for pickup:', pickupId);
+    
     // Find payment by pickup ID
     const payment = await paymentRepo.findByPickupId(pickupId);
 
     if (!payment) {
+      console.warn('⚠️ No payment found for pickup:', pickupId);
       throw new NotFoundError('Payment for this pickup not found');
     }
+
+    console.log('💳 Found payment:', {
+      id: payment._id,
+      status: payment.status,
+      amount: payment.amount,
+      invoiceNumber: payment.invoiceNumber
+    });
 
     // Check payment status
     if (payment.status === 'cancelled') {
@@ -379,10 +389,15 @@ export class PaymentService {
 
     // If payment was not yet paid, just cancel it
     if (payment.status === 'pending' || payment.status === 'overdue') {
+      console.log('💰 Cancelling unpaid payment...');
       const cancelledPayment = await paymentRepo.cancel(payment._id, reason);
+      console.log('✅ Payment cancelled successfully:', cancelledPayment._id);
+      
       return {
         status: 'cancelled',
         message: 'Payment cancelled - no charge was made',
+        paymentId: cancelledPayment._id,
+        amount: cancelledPayment.amount
       };
     }
 

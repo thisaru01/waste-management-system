@@ -24,6 +24,16 @@ export default function Payments() {
 
   useEffect(() => {
     fetchPaymentsData();
+    
+    // Auto-refresh every 30 seconds when page is visible
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchPaymentsData();
+      }
+    }, 30000);
+    
+    // Cleanup interval on unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
@@ -135,6 +145,8 @@ export default function Payments() {
       paid: 'bg-green-100 text-green-800',
       overdue: 'bg-red-100 text-red-800',
       cancelled: 'bg-gray-100 text-gray-800',
+      refunded: 'bg-blue-100 text-blue-800',
+      partially_refunded: 'bg-blue-100 text-blue-800',
     };
     return `${baseClasses} ${statusClasses[status] || ''}`;
   }
@@ -145,23 +157,80 @@ export default function Payments() {
     { value: 'paid', label: 'Paid' },
     { value: 'overdue', label: 'Overdue' },
     { value: 'cancelled', label: 'Cancelled' },
+    { value: 'refunded', label: 'Refunded' },
   ];
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="My Payments"
-        subtitle="View and manage your waste management service payments"
-      />
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="My Payments"
+          subtitle="View and manage your waste management service payments"
+        />
+        <Button 
+          onClick={() => fetchPaymentsData()} 
+          disabled={loading}
+          variant="outline"
+        >
+          {loading ? '🔄 Refreshing...' : '🔄 Refresh'}
+        </Button>
+      </div>
 
       {/* Outstanding Balance Card */}
       <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
         <div className="p-6">
-          <h3 className="text-lg font-medium mb-2">Outstanding Balance</h3>
-          <p className="text-4xl font-bold">{formatCurrency(outstandingBalance)}</p>
-          <p className="text-sm mt-2 opacity-90">Total amount due</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-medium mb-2">Outstanding Balance</h3>
+              <p className="text-4xl font-bold">
+                {loading ? (
+                  <span className="animate-pulse">Loading...</span>
+                ) : (
+                  formatCurrency(outstandingBalance)
+                )}
+              </p>
+              <p className="text-sm mt-2 opacity-90">Total amount due</p>
+            </div>
+            <div className="text-6xl opacity-20">💳</div>
+          </div>
         </div>
       </Card>
+
+      {/* Payment Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <div className="p-4">
+            <p className="text-sm text-gray-600 mb-1">Pending</p>
+            <p className="text-2xl font-bold text-yellow-600">
+              {payments.filter(p => p.status === 'pending').length}
+            </p>
+          </div>
+        </Card>
+        <Card>
+          <div className="p-4">
+            <p className="text-sm text-gray-600 mb-1">Paid</p>
+            <p className="text-2xl font-bold text-green-600">
+              {payments.filter(p => p.status === 'paid').length}
+            </p>
+          </div>
+        </Card>
+        <Card>
+          <div className="p-4">
+            <p className="text-sm text-gray-600 mb-1">Cancelled</p>
+            <p className="text-2xl font-bold text-gray-600">
+              {payments.filter(p => p.status === 'cancelled').length}
+            </p>
+          </div>
+        </Card>
+        <Card>
+          <div className="p-4">
+            <p className="text-sm text-gray-600 mb-1">Refunded</p>
+            <p className="text-2xl font-bold text-blue-600">
+              {payments.filter(p => p.status === 'refunded').length}
+            </p>
+          </div>
+        </Card>
+      </div>
 
       {/* Filters */}
       <Card>
@@ -290,6 +359,14 @@ export default function Payments() {
                           >
                             {processing === payment._id ? 'Processing...' : 'Pay Now'}
                           </Button>
+                        ) : payment.status === 'refunded' ? (
+                          <span className="text-xs text-blue-600">
+                            Refunded: {formatCurrency(payment.refundAmount || payment.amount)}
+                          </span>
+                        ) : payment.status === 'cancelled' ? (
+                          <span className="text-xs text-gray-500">
+                            Cancelled
+                          </span>
                         ) : (
                           '-'
                         )}

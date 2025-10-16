@@ -175,9 +175,23 @@ export class PickupService {
     let refundInfo = null;
     try {
       refundInfo = await paymentService.processPickupCancellationRefund(id, 'Pickup cancelled by resident');
+      console.log('✅ Refund processed successfully:', refundInfo);
     } catch (error) {
-      // Log error but don't fail the cancellation
-      console.error('Failed to process refund:', error.message);
+      // Log error with more details
+      console.error('❌ Failed to process refund:', error);
+      console.error('Error details:', {
+        pickupId: id,
+        errorMessage: error.message,
+        errorName: error.name,
+        stack: error.stack
+      });
+      
+      // Still return error info to user
+      refundInfo = {
+        status: 'error',
+        message: `Failed to process refund: ${error.message}`,
+        error: error.name
+      };
     }
 
     return {

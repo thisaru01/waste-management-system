@@ -34,6 +34,14 @@ export const getOutstandingBalance = async (req, res) => {
     const residentId = req.user.sub;
 
     const balance = await paymentService.getOutstandingBalance(residentId);
+    
+    // Debug logging
+    console.log('Outstanding balance calculation:', {
+      residentId,
+      balance,
+      timestamp: new Date().toISOString()
+    });
+    
     return res.json({ balance });
   } catch (err) {
     const statusCode = err.statusCode || 500;
