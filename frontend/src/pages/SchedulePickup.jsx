@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { schedulePickup, getMyPickups } from '../services/pickups';
+import { schedulePickup, getMyPickups, cancelPickup } from '../services/pickups';
 import PageHeader from '../components/ui/PageHeader';
 import { Card, CardHeader } from '../components/ui/Card';
 import Input from '../components/ui/Input';
@@ -28,7 +28,28 @@ export default function SchedulePickup() {
       const data = await getMyPickups();
       setPickups(data);
     } catch (err) {
-      setError('Failed to load pickups');
+      console.error('Failed to load pickups:', err);
+    }
+  };
+
+  const handleCancelPickup = async (pickupId) => {
+    if (!confirm('Are you sure you want to cancel this pickup?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await cancelPickup(pickupId);
+      setSuccess('Pickup cancelled successfully!');
+      setError('');
+      await loadPickups(); // Reload pickups
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to cancel pickup');
+      setSuccess('');
+      console.error('Failed to cancel pickup:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -191,6 +212,9 @@ export default function SchedulePickup() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -209,11 +233,32 @@ export default function SchedulePickup() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {getStatusBadge(pickup.status)}
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {pickup.status === 'scheduled' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleCancelPickup(pickup._id)}
+                              disabled={loading}
+                            >
+                              Cancel
+                            </Button>
+                          )}
+                          {pickup.status === 'cancelled' && (
+                            <span className="text-gray-400">-</span>
+                          )}
+                          {pickup.status === 'completed' && (
+                            <span className="text-gray-400">-</span>
+                          )}
+                          {pickup.status === 'in-progress' && (
+                            <span className="text-gray-400">In Progress</span>
+                          )}
+                        </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
                         No pickups scheduled yet.
                       </td>
                     </tr>
