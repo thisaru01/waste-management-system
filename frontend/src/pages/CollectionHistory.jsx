@@ -53,6 +53,7 @@ export default function CollectionHistory() {
             <THead>
               <tr>
                 <TH>Date</TH>
+                <TH>Location</TH>
                 <TH>Bin ID</TH>
                 <TH>Waste Type</TH>
                 <TH>Fill Level</TH>
@@ -63,6 +64,7 @@ export default function CollectionHistory() {
               {records.map((r, i) => (
                 <tr key={i} className="border-t">
                   <TD className="py-4">{r.date}</TD>
+                  <TD className="py-4">{r.location?.description ?? r.location ?? '—'}</TD>
                   <TD className="py-4">{r.id}</TD>
                   <TD className="py-4">{r.type}</TD>
                   <TD className="py-4">{r.fill}</TD>
