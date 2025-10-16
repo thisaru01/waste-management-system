@@ -33,7 +33,8 @@ export const updateBinSensor = async (req, res) => {
   }
   let nextStatus = status;
   if (!nextStatus && typeof fillLevelPercent === 'number') {
-    if (fillLevelPercent > 100) nextStatus = 'overflow';
+    // treat 100% as overflow
+    if (fillLevelPercent >= 100) nextStatus = 'overflow';
     else if (fillLevelPercent >= 85) nextStatus = 'needs-collection';
     else if (fillLevelPercent <= 5) nextStatus = 'collected';
     else nextStatus = 'normal';

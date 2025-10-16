@@ -138,6 +138,8 @@ export default function Collection() {
 
           {error && <div className="text-sm text-red-600 mt-2">{error}</div>}
 
+          {/* Overflow notification intentionally removed from Collection view; alert appears on the dashboard. */}
+
           <div className="mt-3">
             <Button
               variant="secondary"
