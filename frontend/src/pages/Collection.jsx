@@ -123,14 +123,17 @@ export default function Collection() {
         assignForBin._id || assignForBin.id,
         selectedCollectorId
       );
-      // Update local bins state with updated bin
-      setBins((prev) =>
-        prev.map((b) =>
-          (b._id || b.id) === (updated._id || updated.id)
-            ? { ...b, ...updated }
-            : b
-        )
-      );
+      // Remove the assigned bin from the flagged list so it no longer
+      // appears on the Collection dashboard. The backend marks the bin
+      // with status 'assigned' when a collector is assigned; we remove
+      // it locally to keep the UI responsive without refetching.
+      setBins((prev) => prev.filter((b) => (b._id || b.id) !== (updated._id || updated.id)));
+      // Notify other parts of the UI (Pending view) that a bin was assigned
+      try {
+        window.dispatchEvent(new CustomEvent('binAssigned', { detail: updated }));
+      } catch (e) {
+        // ignore in non-browser or test environments
+      }
       setAssignOpen(false);
     } catch (e) {
       setError(
