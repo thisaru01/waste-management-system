@@ -14,11 +14,11 @@ export default function CollectionHistory() {
   const [filters, setFilters] = useState({ type: '', location: '', start: '', end: '', fill: 50 });
 
   const records = [
-    { date: 'July 15, 2024', id: 'Bin 123', type: 'Plastic', fill: '90 %', status: 'Pending' },
-    { date: 'July 8, 2024', id: 'Bin 123', type: 'Food', fill: '88 %', status: 'Pending' },
-    { date: 'July 1, 2024', id: 'Bin 123', type: 'All', fill: '100 %', status: 'Collected' },
-    { date: 'June 24, 2024', id: 'Bin 123', type: 'Chemicals', fill: '85 %', status: 'Collected' },
-    { date: 'June 17, 2024', id: 'Bin 123', type: 'Dust', fill: '94 %', status: 'Collected' },
+    { date: 'July 15, 2024', id: 'Bin 123', location: 'Maharagama', type: 'Plastic', fill: '90 %', status: 'Pending' },
+    { date: 'July 8, 2024', id: 'Bin 123', location: 'Malabe', type: 'Food', fill: '88 %', status: 'Pending' },
+    { date: 'July 1, 2024', id: 'Bin 123', location: 'Colombo', type: 'All', fill: '100 %', status: 'Collected' },
+    { date: 'June 24, 2024', id: 'Bin 123', location: 'Pannipitiya', type: 'Chemicals', fill: '85 %', status: 'Collected' },
+    { date: 'June 17, 2024', id: 'Bin 123', location: 'Kandy', type: 'Dust', fill: '94 %', status: 'Collected' },
   ];
 
   return (
