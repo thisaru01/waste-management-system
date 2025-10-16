@@ -10,6 +10,18 @@ export const listBins = async (_req, res) => {
 };
 
 /**
+ * GET /api/bins/flagged
+ * List bins that are flagged for collection (fillLevelPercent >= threshold)
+ * Accessible to any authenticated user.
+ */
+export const listFlagged = async (req, res) => {
+  const threshold = Number(req.query.threshold ?? 85);
+  const filter = { fillLevelPercent: { $gte: threshold } };
+  const bins = await binRepo.list(filter, '-__v');
+  return res.json(bins);
+};
+
+/**
  * PATCH /api/bins/:id/sensor
  * Update sensor readings: { fillLevelPercent?, weightKg? }
  */

@@ -10,6 +10,15 @@ export async function listBins() {
 }
 
 /**
+ * List flagged bins (fill >= threshold). Uses auth token if available.
+ * @param {number} threshold
+ */
+export async function listFlaggedBins(threshold = 85) {
+  const { data } = await API.get(`/api/bins/flagged?threshold=${encodeURIComponent(threshold)}`);
+  return data;
+}
+
+/**
  * Update bin sensor readings.
  * @param {string} id Bin ID
  * @param {{fillLevelPercent?:number, weightKg?:number}} payload
