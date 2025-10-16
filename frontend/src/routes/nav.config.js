@@ -41,6 +41,12 @@ export const NAV_ITEMS = [
     roles: ["collector"],
   },
   {
+    label: "Scan Bin",
+    to: "/collector/scan",
+    icon: "collection",
+    roles: ["collector"],
+  },
+  {
     label: "Payments",
     to: "/coming-soon/payments",
     icon: "payments",

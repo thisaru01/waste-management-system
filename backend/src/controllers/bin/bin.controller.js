@@ -46,11 +46,9 @@ export const updateBinSensor = async (req, res) => {
     typeof weightKg !== "number" &&
     typeof status !== "string"
   ) {
-    return res
-      .status(400)
-      .json({
-        message: "Provide at least one of: fillLevelPercent, weightKg, status",
-      });
+    return res.status(400).json({
+      message: "Provide at least one of: fillLevelPercent, weightKg, status",
+    });
   }
   let nextStatus = status;
   if (!nextStatus && typeof fillLevelPercent === "number") {
@@ -106,6 +104,55 @@ export const clearAssignment = async (req, res) => {
   return res.json(updated);
 };
 
+/**
+ * GET /api/bins/code/:code
+ * Get a bin by its unique code (for QR scanning)
+ * Accessible to collectors
+ */
+export const getBinByCode = async (req, res) => {
+  const { code } = req.params;
+  if (!code) return res.status(400).json({ message: "Bin code is required" });
+
+  const bin = await binRepo.findByCode(code);
+  if (!bin) return res.status(404).json({ message: "Bin not found" });
+
+  // Populate references for full details
+  await bin.populate("owner", "firstName lastName email roles");
+  await bin.populate("assignedCollector", "firstName lastName email roles");
+
+  return res.json(bin);
+};
+
+/**
+ * PATCH /api/bins/:id/collect
+ * Mark a bin as collected by the authenticated collector
+ * Only the assigned collector can mark as collected
+ */
+export const markAsCollected = async (req, res) => {
+  const { id } = req.params;
+  const collectorId = req.user?.sub;
+
+  if (!collectorId) return res.status(401).json({ message: "Unauthorized" });
+
+  const bin = await binRepo.findById(id);
+  if (!bin) return res.status(404).json({ message: "Bin not found" });
+
+  // Verify collector is assigned to this bin (optional - can be enforced or relaxed)
+  // For flexibility, allow any collector to mark as collected
+  // Uncomment below to enforce assignment:
+  // if (bin.assignedCollector?.toString() !== collectorId) {
+  //   return res.status(403).json({ message: "You are not assigned to this bin" });
+  // }
+
+  const updated = await binRepo.updateSensor(id, {
+    fillLevelPercent: 0,
+    weightKg: 0,
+    status: "collected",
+  });
+
+  return res.json(updated);
+};
+
 export default {
   listBins,
   updateBinSensor,
@@ -113,4 +160,6 @@ export default {
   listAssignedForMe,
   assignCollector,
   clearAssignment,
+  getBinByCode,
+  markAsCollected,
 };

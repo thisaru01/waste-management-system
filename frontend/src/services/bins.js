@@ -52,6 +52,26 @@ export async function unassignBin(id) {
   return data;
 }
 
+/**
+ * Get a bin by its unique code (for QR scanning)
+ * @param {string} code Bin code
+ * @returns {Promise<Object>} Bin document
+ */
+export async function getBinByCode(code) {
+  const { data } = await API.get(`/api/bins/code/${encodeURIComponent(code)}`);
+  return data;
+}
+
+/**
+ * Mark a bin as collected
+ * @param {string} id Bin ID
+ * @returns {Promise<Object>} Updated bin
+ */
+export async function markBinAsCollected(id) {
+  const { data } = await API.patch(`/api/bins/${id}/collect`);
+  return data;
+}
+
 export default {
   listBins,
   updateBinSensor,
@@ -59,4 +79,6 @@ export default {
   listAssignedBinsForCollector,
   assignBin,
   unassignBin,
+  getBinByCode,
+  markBinAsCollected,
 };

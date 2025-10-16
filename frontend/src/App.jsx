@@ -9,6 +9,7 @@ import AdminUsers from "./pages/AdminUsers.jsx";
 import AdminSensorSim from "./pages/AdminSensorSim.jsx";
 import ComingSoon from "./pages/ComingSoon.jsx";
 import CollectorSchedule from "./pages/CollectorSchedule.jsx";
+import CollectorScanBin from "./pages/CollectorScanBin.jsx";
 import Collection from "./pages/Collection.jsx";
 import CollectionHistory from "./pages/CollectionHistory.jsx";
 
@@ -43,6 +44,7 @@ function App() {
                   path="/collector/schedule"
                   element={<CollectorSchedule />}
                 />
+                <Route path="/collector/scan" element={<CollectorScanBin />} />
               </Route>
             </Route>
           </Route>
