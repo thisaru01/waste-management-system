@@ -18,13 +18,13 @@ export const NAV_ITEMS = [
   // Example placeholders for future areas; adjust role targeting as needed
   {
     label: 'Collections',
-    to: '/coming-soon/collections',
+    to: '/collections',
     icon: 'collection',
     roles: ['authority', 'collector'],
   },
   {
     label: 'Collection History',
-    to: '/coming-soon/collection-history',
+    to: '/collection-history',
     icon: 'history',
     roles: ['authority', 'collector'],
   },

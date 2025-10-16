@@ -7,6 +7,8 @@ import Home from './pages/Home.jsx';
 import Admin from './pages/Admin.jsx';
 import AdminUsers from './pages/AdminUsers.jsx';
 import ComingSoon from './pages/ComingSoon.jsx';
+import Collection from './pages/Collection.jsx';
+import CollectionHistory from './pages/CollectionHistory.jsx';
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
               </Route>
               {/* Placeholder pages for planned sections */}
               <Route path="/coming-soon/:slug" element={<ComingSoon title="Coming Soon" />} />
+              <Route path="/collections" element={<Collection />} />
+              <Route path="/collection-history" element={<CollectionHistory />} />
             </Route>
           </Route>
         </Routes>
