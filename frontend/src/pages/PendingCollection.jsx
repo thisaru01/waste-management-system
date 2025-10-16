@@ -106,6 +106,49 @@ export default function PendingCollection() {
     return () => window.removeEventListener('binAssigned', handler);
   }, []);
 
+  // Listen for generic binUpdated events so we can react to status changes.
+  // When a bin's status becomes 'collector' we remove it from Pending and
+  // notify the history view to record the collection.
+  useEffect(() => {
+    const handler = (ev) => {
+      const updated = ev?.detail;
+      if (!updated) return;
+  const st = (updated.status ?? '').toString().toLowerCase();
+  // Treat both 'collector' (previous naming) and 'collected' as
+  // terminal states that should move the bin into collection history.
+  if (st !== 'collector' && st !== 'collected') return;
+      const id = updated._id || updated.id;
+      setBins((prev) => prev.filter((b) => (b._id || b.id) !== id));
+      // Persist a lightweight history record so CollectionHistory can
+      // show it even if it wasn't mounted when this event fired.
+      try {
+        const record = {
+          date: new Date().toLocaleDateString(),
+          id: updated.code || updated._id || updated.id || '—',
+          location: (updated.location && (updated.location.description || updated.location)) || '—',
+          type: updated.type || '—',
+          fill: (updated.fillLevelPercent ?? updated.fillNumeric ?? updated.fill ?? updated.fillLevel ?? '–') + ' %',
+          status: 'Collected',
+        };
+        const key = 'collectionHistoryRecords';
+        const raw = localStorage.getItem(key);
+        const list = raw ? JSON.parse(raw) : [];
+        // prepend to keep newest first
+        list.unshift(record);
+        localStorage.setItem(key, JSON.stringify(list));
+      } catch (e) {
+        // ignore storage errors
+      }
+      try {
+        window.dispatchEvent(new CustomEvent('binCollected', { detail: updated }));
+      } catch (e) {
+        // ignore in non-browser/test envs
+      }
+    };
+    window.addEventListener('binUpdated', handler);
+    return () => window.removeEventListener('binUpdated', handler);
+  }, []);
+
   return (
     <div className="max-w-5xl mx-auto">
       <PageHeader title="Pending collection" subtitle="Bins pending collection" />

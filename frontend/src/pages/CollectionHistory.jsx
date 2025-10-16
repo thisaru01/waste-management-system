@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import Button from '../components/ui/Button.jsx';
 import Input from '../components/ui/Input.jsx';
@@ -11,15 +11,50 @@ function StatusPill({ status }) {
 }
 
 export default function CollectionHistory() {
-  const [filters, setFilters] = useState({ type: '', location: '', start: '', end: '', fill: 50 });
+  // Default fill set to 0 so history shows all records by default
+  const [filters, setFilters] = useState({ type: '', location: '', start: '', end: '', fill: 0 });
 
-  const records = [
-    { date: 'July 15, 2024', id: 'Bin 123', location: 'Maharagama', type: 'Plastic', fill: '90 %', status: 'Pending' },
-    { date: 'July 8, 2024', id: 'Bin 123', location: 'Malabe', type: 'Plastic', fill: '88 %', status: 'Pending' },
-    { date: 'July 1, 2024', id: 'Bin 123', location: 'Colombo', type: 'Plastic', fill: '100 %', status: 'Collected' },
-    { date: 'June 24, 2024', id: 'Bin 123', location: 'Pannipitiya', type: 'Plastic', fill: '85 %', status: 'Collected' },
-    { date: 'June 17, 2024', id: 'Bin 123', location: 'Kandy', type: 'Plastic', fill: '94 %', status: 'Collected' },
-  ];
+  // Initialize with an empty list and load persisted records (if any)
+  const [records, setRecords] = useState([]);
+
+  // Listen for binCollected events and append a record to the history.
+  useEffect(() => {
+    const handler = (ev) => {
+      const b = ev?.detail;
+      if (!b) return;
+      // Create a simple record shape — keep it minimal and safe if fields missing
+      const record = {
+        date: new Date().toLocaleDateString(),
+        id: b.code || b._id || b.id || '—',
+        location: (b.location && (b.location.description || b.location)) || '—',
+        type: b.type || '—',
+        fill: (b.fillLevelPercent ?? b.fillNumeric ?? b.fill ?? b.fillLevel ?? '–') + ' %',
+        status: 'Collected',
+      };
+      setRecords((prev) => [record, ...prev]);
+    };
+    window.addEventListener('binCollected', handler);
+    return () => window.removeEventListener('binCollected', handler);
+  }, []);
+
+  // Load persisted records from localStorage (if any) so history page shows
+  // collected bins that happened while this page was not open.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('collectionHistoryRecords');
+      if (!raw) return;
+      const list = JSON.parse(raw);
+      if (!Array.isArray(list) || list.length === 0) return;
+      setRecords((prev) => {
+        // Merge persisted records, avoiding duplicates by id+date
+        const seen = new Set(prev.map((r) => `${r.date}|${r.id}`));
+        const merged = [...list.filter((r) => !seen.has(`${r.date}|${r.id}`)), ...prev];
+        return merged;
+      });
+    } catch (e) {
+      // ignore parse errors
+    }
+  }, []);
 
   // apply filters from the UI: type, location (substring, case-insensitive), date range and minimum fill
   const filteredRecords = records.filter((r) => {
