@@ -36,9 +36,9 @@ export const NAV_ITEMS = [
   },
   {
     label: 'Payments',
-    to: '/coming-soon/payments',
+    to: '/payments',
     icon: 'payments',
-    roles: ['authority', 'bin-owner'],
+    roles: ['resident', 'bin-owner', '*'],
   },
   {
     label: 'Schedule Pickup',

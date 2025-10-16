@@ -8,6 +8,8 @@ import { errorHandler } from "./middleware/error.middleware.js";
 import binRoutes from './routes/bin/bin.routes.js';
 import residentPickupRoutes from './routes/residentRoutes/pickup.routes.js';
 import adminPickupRoutes from './routes/adminrouter/pickup.routes.js';
+import residentPaymentRoutes from './routes/residentRoutes/payment.routes.js';
+import adminPaymentRoutes from './routes/adminrouter/payment.routes.js';
 
 const app = express();
 
@@ -28,6 +30,8 @@ app.use("/api/roles", roleRoutes);
 app.use('/api/bins', binRoutes);
 app.use('/api/pickups', residentPickupRoutes);
 app.use('/api/admin/pickups', adminPickupRoutes);
+app.use('/api/payments', residentPaymentRoutes);
+app.use('/api/admin/payments', adminPaymentRoutes);
 
 // Error handler
 app.use(errorHandler);
