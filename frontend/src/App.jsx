@@ -8,6 +8,7 @@ import Admin from './pages/Admin.jsx';
 import AdminUsers from './pages/AdminUsers.jsx';
 import AdminSensorSim from './pages/AdminSensorSim.jsx';
 import ComingSoon from './pages/ComingSoon.jsx';
+import SchedulePickup from './pages/SchedulePickup.jsx';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/" element={<Home />} />
+              <Route path="/schedule-pickup" element={<SchedulePickup />} />
               <Route element={<RoleGuard roles={["admin"]} />}>
                 <Route path="/admin" element={<Admin />}>
                   <Route index element={<AdminUsers />} />

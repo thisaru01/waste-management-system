@@ -42,9 +42,9 @@ export const NAV_ITEMS = [
   },
   {
     label: 'Schedule Pickup',
-    to: '/coming-soon/schedule-pickup',
+    to: '/schedule-pickup',
     icon: 'calendar',
-    roles: ['bin-owner'],
+    roles: ['resident', 'bin-owner', '*'],
   },
   {
     label: 'Data Analysis',

@@ -6,6 +6,8 @@ import userRoutes from "./routes/adminrouter/user.routes.js";
 import roleRoutes from "./routes/auth/role.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import binRoutes from './routes/bin/bin.routes.js';
+import residentPickupRoutes from './routes/residentRoutes/pickup.routes.js';
+import adminPickupRoutes from './routes/adminrouter/pickup.routes.js';
 
 const app = express();
 
@@ -24,6 +26,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/roles", roleRoutes);
 app.use('/api/bins', binRoutes);
+app.use('/api/pickups', residentPickupRoutes);
+app.use('/api/admin/pickups', adminPickupRoutes);
 
 // Error handler
 app.use(errorHandler);
