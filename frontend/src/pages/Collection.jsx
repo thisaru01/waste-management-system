@@ -4,6 +4,7 @@ import Button from '../components/ui/Button.jsx';
 import { Card, CardHeader, CardContent } from '../components/ui/Card.jsx';
 import { TableContainer, Table, THead, TBody, TH, TD } from '../components/ui/Table.jsx';
 import { listBins, listFlaggedBins } from '../services/bins';
+import { transformAndSortBins } from '../utils/binHelpers';
 
 function StatusBadge({ status }) {
   const cls =
@@ -59,31 +60,8 @@ export default function Collection() {
     listFlaggedBins(THRESHOLD)
       .then((data) => {
         if (!mounted) return;
-        // helper to parse various fill representations like 90, '90 %', '90%'
-        const parseFill = (val) => {
-          if (val === undefined || val === null) return NaN;
-          if (typeof val === 'number') return val;
-          if (typeof val === 'string') {
-            // extract first number-like token
-            const m = val.match(/-?\d+(?:\.\d+)?/);
-            return m ? Number(m[0]) : NaN;
-          }
-          return NaN;
-        };
-
-            const flagged = (data || []).map((b) => {
-              const raw = b.fillLevelPercent ?? b.fill ?? b.fillLevel ?? null;
-              const fillNumeric = parseFill(raw);
-              return { ...b, fillNumeric };
-            }).filter((b) => !Number.isNaN(b.fillNumeric) && b.fillNumeric >= THRESHOLD);
-
-            // sort so bins from same location appear consecutively
-            flagged.sort((a, c) => {
-              const key = (x) => ((x.location && (x.location.description || x.location)) || x.code || '').toString();
-              return key(a).localeCompare(key(c));
-            });
-
-            setBins(flagged);
+        // transform and sort using helper to keep component code clean
+        setBins(transformAndSortBins(data, THRESHOLD));
       })
       .catch((err) => {
         console.error('listBins error', err);
@@ -113,29 +91,23 @@ export default function Collection() {
           {error && <div className="text-sm text-red-600 mt-2">{error}</div>}
 
           <div className="mt-3">
-            <Button variant="secondary" onClick={() => { setError(''); setLoading(true); listBins().then(d => {
-              // reuse same parsing logic as above
-              const parseFill = (val) => {
-                if (val === undefined || val === null) return NaN;
-                if (typeof val === 'number') return val;
-                if (typeof val === 'string') {
-                  const m = val.match(/-?\d+(?:\.\d+)?/);
-                  return m ? Number(m[0]) : NaN;
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                setError('');
+                setLoading(true);
+                try {
+                  const data = await listFlaggedBins(THRESHOLD);
+                  setBins(transformAndSortBins(data, THRESHOLD));
+                } catch (e) {
+                  setError(e?.response?.data?.message || e.message || 'Failed to load bins');
+                } finally {
+                  setLoading(false);
                 }
-                return NaN;
-              };
-              const flagged = (d || []).map((b) => {
-                const raw = b.fillLevelPercent ?? b.fill ?? b.fillLevel ?? null;
-                const fillNumeric = parseFill(raw);
-                return { ...b, fillNumeric };
-              }).filter((b) => !Number.isNaN(b.fillNumeric) && b.fillNumeric >= THRESHOLD);
-              // sort so bins from same location appear consecutively
-              flagged.sort((a, c) => {
-                const key = (x) => ((x.location && (x.location.description || x.location)) || x.code || '').toString();
-                return key(a).localeCompare(key(c));
-              });
-              setBins(flagged);
-            }).catch(e => setError(e?.response?.data?.message || e.message || 'Failed to load bins')).finally(()=>setLoading(false)); }}>Refresh</Button>
+              }}
+            >
+              Refresh
+            </Button>
           </div>
 
           <div className="mt-6">
@@ -150,8 +122,8 @@ export default function Collection() {
                   </tr>
                 </THead>
                 <TBody>
-                  {bins.map((b) => (
-                    <tr key={b._id ?? b.id ?? b.location ?? Math.random()} className="border-t">
+                  {bins.map((b, idx) => (
+                    <tr key={b._id ?? b.id ?? `${b.code ?? (b.location?.description ?? b.location ?? 'loc')}-${idx}`} className="border-t">
                       <TD className="py-4">{b.location?.description ?? b.location ?? '—'}</TD>
                       <TD className="py-4">{(b.fillNumeric ?? '–') + ' %'}</TD>
                       <TD className="py-4">{b.type}</TD>
