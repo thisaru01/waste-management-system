@@ -54,7 +54,7 @@ export const NAV_ITEMS = [
   },
   {
     label: 'Settings',
-    to: '/coming-soon/settings',
+    to: '/settings',
     icon: 'settings',
     roles: '*',
   },

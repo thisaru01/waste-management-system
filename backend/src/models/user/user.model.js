@@ -28,6 +28,28 @@ const UserSchema = new Schema(
       trim: true,
       default: '',
     },
+    address: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    phone: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    emailNotifications: {
+      type: Boolean,
+      default: true,
+    },
+    smsNotifications: {
+      type: Boolean,
+      default: false,
+    },
+    inAppNotifications: {
+      type: Boolean,
+      default: true,
+    },
     roles: [{ type: Schema.Types.ObjectId, ref: 'Role' }],
     isActive: {
       type: Boolean,
@@ -49,6 +71,11 @@ UserSchema.methods.comparePassword = async function (plain) {
 UserSchema.statics.hashPassword = async function (plain) {
   const salt = await bcrypt.genSalt(10);
   return bcrypt.hash(plain, salt);
+};
+
+// Static helper for comparing passwords
+UserSchema.statics.comparePasswords = async function (plain, hash) {
+  return bcrypt.compare(plain, hash);
 };
 
 export default mongoose.model('User', UserSchema);

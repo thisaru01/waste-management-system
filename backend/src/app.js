@@ -10,6 +10,7 @@ import residentPickupRoutes from './routes/residentRoutes/pickup.routes.js';
 import adminPickupRoutes from './routes/adminrouter/pickup.routes.js';
 import residentPaymentRoutes from './routes/residentRoutes/payment.routes.js';
 import adminPaymentRoutes from './routes/adminrouter/payment.routes.js';
+import settingsRoutes from './routes/residentRoutes/settings.routes.js';
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/pickups', residentPickupRoutes);
 app.use('/api/admin/pickups', adminPickupRoutes);
 app.use('/api/payments', residentPaymentRoutes);
 app.use('/api/admin/payments', adminPaymentRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Error handler
 app.use(errorHandler);

@@ -10,6 +10,7 @@ import AdminSensorSim from './pages/AdminSensorSim.jsx';
 import ComingSoon from './pages/ComingSoon.jsx';
 import SchedulePickup from './pages/SchedulePickup.jsx';
 import Payments from './pages/Payments.jsx';
+import Settings from './pages/Settings.jsx';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/schedule-pickup" element={<SchedulePickup />} />
               <Route path="/payments" element={<Payments />} />
+              <Route path="/settings" element={<Settings />} />
               <Route element={<RoleGuard roles={["admin"]} />}>
                 <Route path="/admin" element={<Admin />}>
                   <Route index element={<AdminUsers />} />
