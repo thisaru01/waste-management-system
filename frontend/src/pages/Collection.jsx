@@ -72,12 +72,18 @@ export default function Collection() {
         };
 
             const flagged = (data || []).map((b) => {
-          const raw = b.fillLevelPercent ?? b.fill ?? b.fillLevel ?? null;
-          const fillNumeric = parseFill(raw);
-          return { ...b, fillNumeric };
-        }).filter((b) => !Number.isNaN(b.fillNumeric) && b.fillNumeric >= THRESHOLD);
+              const raw = b.fillLevelPercent ?? b.fill ?? b.fillLevel ?? null;
+              const fillNumeric = parseFill(raw);
+              return { ...b, fillNumeric };
+            }).filter((b) => !Number.isNaN(b.fillNumeric) && b.fillNumeric >= THRESHOLD);
 
-        setBins(flagged);
+            // sort so bins from same location appear consecutively
+            flagged.sort((a, c) => {
+              const key = (x) => ((x.location && (x.location.description || x.location)) || x.code || '').toString();
+              return key(a).localeCompare(key(c));
+            });
+
+            setBins(flagged);
       })
       .catch((err) => {
         console.error('listBins error', err);
@@ -123,6 +129,11 @@ export default function Collection() {
                 const fillNumeric = parseFill(raw);
                 return { ...b, fillNumeric };
               }).filter((b) => !Number.isNaN(b.fillNumeric) && b.fillNumeric >= THRESHOLD);
+              // sort so bins from same location appear consecutively
+              flagged.sort((a, c) => {
+                const key = (x) => ((x.location && (x.location.description || x.location)) || x.code || '').toString();
+                return key(a).localeCompare(key(c));
+              });
               setBins(flagged);
             }).catch(e => setError(e?.response?.data?.message || e.message || 'Failed to load bins')).finally(()=>setLoading(false)); }}>Refresh</Button>
           </div>
