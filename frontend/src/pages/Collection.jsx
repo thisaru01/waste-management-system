@@ -3,8 +3,11 @@ import PageHeader from '../components/ui/PageHeader.jsx';
 import Button from '../components/ui/Button.jsx';
 import { Card, CardHeader, CardContent } from '../components/ui/Card.jsx';
 import { TableContainer, Table, THead, TBody, TH, TD } from '../components/ui/Table.jsx';
-import { listBins, listFlaggedBins } from '../services/bins';
+import { listBins, listFlaggedBins, assignBin } from '../services/bins';
+import { listCollectors } from '../services/users';
+import Modal from '../components/ui/Modal.jsx';
 import { transformAndSortBins, getLocationKey } from '../utils/binHelpers';
+import { useAuth } from '../context/AuthContext.jsx';
 
 function StatusBadge({ status }) {
   const cls =
@@ -42,6 +45,8 @@ function Countdown({ target }) {
 }
 
 export default function Collection() {
+  const { hasRole } = useAuth();
+  const canAssign = hasRole('authority');
   const nextPickup = new Date();
   nextPickup.setDate(nextPickup.getDate() + 3);
   const target = nextPickup.getTime();
@@ -49,6 +54,12 @@ export default function Collection() {
   const [bins, setBins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [assignForBin, setAssignForBin] = useState(null);
+  const [collectors, setCollectors] = useState([]);
+  const [collectorsLoading, setCollectorsLoading] = useState(false);
+  const [selectedCollectorId, setSelectedCollectorId] = useState('');
+  const [savingAssign, setSavingAssign] = useState(false);
 
   // threshold for flagging bins
   const THRESHOLD = 85;
@@ -61,19 +72,34 @@ export default function Collection() {
    *
    * @param {Object} bin - the bin object being assigned
    */
-  const assignCollector = (bin) => {
+  const openAssignModal = async (bin) => {
+    setError('');
+    setAssignForBin(bin);
+    setSelectedCollectorId('');
+    setAssignOpen(true);
+    setCollectorsLoading(true);
     try {
-      const id = bin._id ?? bin.id ?? bin.code ?? 'unknown';
-      const collector = window.prompt(`Assign collector for bin ${id}`);
-      if (!collector) return;
-      // TODO: call API to persist assignment. This is a safe placeholder.
-      console.log('Assigning collector', { binId: id, collector });
-      // feedback for now — replace with non-blocking toast in future
-      // eslint-disable-next-line no-alert
-      alert(`Assigned ${collector} to bin ${id}`);
-    } catch (err) {
-      console.error('assignCollector error', err);
-      setError('Failed to assign collector');
+      const list = await listCollectors();
+      setCollectors(list);
+    } catch (e) {
+      setError(e?.response?.data?.message || e.message || 'Failed to load collectors');
+    } finally {
+      setCollectorsLoading(false);
+    }
+  };
+
+  const confirmAssign = async () => {
+    if (!assignForBin || !selectedCollectorId) return;
+    setSavingAssign(true);
+    try {
+      const updated = await assignBin(assignForBin._id || assignForBin.id, selectedCollectorId);
+      // Update local bins state with updated bin
+      setBins((prev) => prev.map((b) => ((b._id || b.id) === (updated._id || updated.id) ? { ...b, ...updated } : b)));
+      setAssignOpen(false);
+    } catch (e) {
+      setError(e?.response?.data?.message || e.message || 'Failed to assign bin');
+    } finally {
+      setSavingAssign(false);
     }
   };
 
@@ -123,6 +149,7 @@ export default function Collection() {
   }, []);
 
   return (
+    <>
     <div className="max-w-5xl mx-auto">
       <PageHeader title="Collection Dashboard" subtitle="Bin Collection Summary" />
 
@@ -188,17 +215,19 @@ export default function Collection() {
                               <div>
                                 <StatusBadge status={(b.status && String(b.status).toLowerCase().includes('collected')) ? 'Collected' : 'Pending'} />
                               </div>
-                              <div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-sm"
-                                  onClick={() => assignCollector(b)}
-                                  aria-label={`Assign collector to bin ${b.code ?? b._id ?? ''}`}
-                                >
-                                  Assign
-                                </Button>
-                              </div>
+                              {canAssign && (
+                                <div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-sm"
+                                    onClick={() => openAssignModal(b)}
+                                    aria-label={`Assign collector to bin ${b.code ?? b._id ?? ''}`}
+                                  >
+                                    Assign
+                                  </Button>
+                                </div>
+                              )}
                             </div>
                           </TD>
                         </tr>
@@ -236,6 +265,54 @@ export default function Collection() {
           </div>
         </div>
       </div>
-    </div>
+  </div>
+  {/* Assign Collector Modal (authority only) */}
+  {canAssign && (
+    <Modal
+      isOpen={assignOpen}
+      onClose={() => setAssignOpen(false)}
+      title={`Assign Collector${assignForBin ? ` — ${assignForBin.code || assignForBin._id || ''}` : ''}`}
+      footer={(
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setAssignOpen(false)} disabled={savingAssign}>Cancel</Button>
+          <Button variant="primary" onClick={confirmAssign} disabled={!selectedCollectorId || savingAssign}>
+            {savingAssign ? 'Assigning…' : 'Assign'}
+          </Button>
+        </div>
+      )}
+    >
+      {collectorsLoading ? (
+        <div className="text-sm text-gray-600">Loading collectors…</div>
+      ) : (
+        <div className="space-y-3">
+          <div className="text-sm text-gray-600">Select a collector to assign to this bin.</div>
+          <div className="max-h-64 overflow-auto border rounded-md divide-y">
+            {collectors.length === 0 && (
+              <div className="p-3 text-sm text-gray-500">No collectors found. Create a user with the collector role first.</div>
+            )}
+            {collectors.map((u) => {
+              const id = u._id || u.id;
+              const name = `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email;
+              const isSel = selectedCollectorId === id;
+              return (
+                <label key={id} className={`flex items-center gap-3 p-3 cursor-pointer ${isSel ? 'bg-blue-50' : ''}`}>
+                  <input type="radio" name="collector" value={id} checked={isSel} onChange={() => setSelectedCollectorId(id)} />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{name}</span>
+                    <span className="text-xs text-gray-500">{u.email}</span>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+  </Modal>
+  )}
+    </>
   );
 }
+
+// Inline below the component export to keep file scope
+/* Modal UI to assign a bin to a collector */
+

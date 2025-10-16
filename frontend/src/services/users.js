@@ -12,4 +12,11 @@ export async function listUsers() {
   return data;
 }
 
-export default { createUser, listUsers };
+export async function listCollectors() {
+  const { data } = await API.get('/api/users');
+  // Filter client-side by role name === 'collector'
+  const isCollector = (u) => Array.isArray(u.roles) && u.roles.some((r) => (r.name || r)?.toString?.().toLowerCase?.() === 'collector');
+  return (data || []).filter(isCollector);
+}
+
+export default { createUser, listUsers, listCollectors };

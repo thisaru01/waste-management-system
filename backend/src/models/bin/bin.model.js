@@ -26,6 +26,9 @@ const BinSchema = new Schema(
       description: { type: String, default: '' },
     },
     owner: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+  // Collector currently assigned to collect this bin
+  assignedCollector: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+  assignedAt: { type: Date, default: null },
     fillLevelPercent: { type: Number, default: 0, min: 0, max: 100 },
     weightKg: { type: Number, default: 0, min: 0 },
     status: {

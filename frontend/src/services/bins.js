@@ -29,4 +29,16 @@ export async function updateBinSensor(id, payload) {
   return data;
 }
 
-export default { listBins, updateBinSensor };
+/** Assign a bin to a collector user */
+export async function assignBin(id, collectorId) {
+  const { data } = await API.patch(`/api/bins/${id}/assign`, { collectorId });
+  return data;
+}
+
+/** Clear collector assignment for a bin */
+export async function unassignBin(id) {
+  const { data } = await API.patch(`/api/bins/${id}/unassign`);
+  return data;
+}
+
+export default { listBins, updateBinSensor, listFlaggedBins, assignBin, unassignBin };
