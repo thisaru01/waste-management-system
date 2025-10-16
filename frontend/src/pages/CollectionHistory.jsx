@@ -22,57 +22,57 @@ export default function CollectionHistory() {
   ];
 
   return (
-    <div>
+    <div className="max-w-6xl mx-auto">
       <PageHeader title="Collection List" subtitle="" />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Select value={filters.type} onChange={(e) => setFilters((s) => ({ ...s, type: e.target.value }))}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <Select value={filters.type} onChange={(e) => setFilters((s) => ({ ...s, type: e.target.value }))} className="border-green-50">
           <option value="">Select Waste Type</option>
           <option>Plastic</option>
           <option>Food</option>
           <option>All</option>
         </Select>
         <Input placeholder="Location : Rajagiriya" value={filters.location} onChange={(e) => setFilters((s) => ({ ...s, location: e.target.value }))} />
-        <div className="flex gap-2">
-          <Input type="date" value={filters.start} onChange={(e) => setFilters((s) => ({ ...s, start: e.target.value }))} />
-          <Input type="date" value={filters.end} onChange={(e) => setFilters((s) => ({ ...s, end: e.target.value }))} />
-        </div>
       </div>
 
-  <div className="flex items-center gap-4 mb-6">
-        <div className="flex-1">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mb-6">
+        <Input type="date" value={filters.start} onChange={(e) => setFilters((s) => ({ ...s, start: e.target.value }))} />
+        <Input type="date" value={filters.end} onChange={(e) => setFilters((s) => ({ ...s, end: e.target.value }))} />
+        <div className="md:col-span-1 col-span-2">
           <label className="text-sm text-gray-700">Fill Level</label>
-          <input type="range" min="0" max="100" value={filters.fill} onChange={(e) => setFilters((s) => ({ ...s, fill: e.target.value }))} className="w-full" />
+          <input type="range" min="0" max="100" value={filters.fill} onChange={(e) => setFilters((s) => ({ ...s, fill: e.target.value }))} className="w-full mt-2" />
         </div>
-        <div>
+        <div className="flex items-center">
           <Button variant="success">Filter Bins</Button>
         </div>
       </div>
 
-      <TableContainer>
-        <Table>
-          <THead>
-            <tr>
-              <TH>Date</TH>
-              <TH>Bin ID</TH>
-              <TH>Waste Type</TH>
-              <TH>Fill Level</TH>
-              <TH>Status</TH>
-            </tr>
-          </THead>
-          <TBody>
-            {records.map((r, i) => (
-              <tr key={i}>
-                <TD>{r.date}</TD>
-                <TD>{r.id}</TD>
-                <TD>{r.type}</TD>
-                <TD>{r.fill}</TD>
-                <TD><StatusPill status={r.status} /></TD>
+      <div className="rounded-lg overflow-hidden border border-gray-100 bg-white">
+        <TableContainer>
+          <Table>
+            <THead>
+              <tr>
+                <TH>Date</TH>
+                <TH>Bin ID</TH>
+                <TH>Waste Type</TH>
+                <TH>Fill Level</TH>
+                <TH>Status</TH>
               </tr>
-            ))}
-          </TBody>
-        </Table>
-      </TableContainer>
+            </THead>
+            <TBody>
+              {records.map((r, i) => (
+                <tr key={i} className="border-t">
+                  <TD className="py-4">{r.date}</TD>
+                  <TD className="py-4">{r.id}</TD>
+                  <TD className="py-4">{r.type}</TD>
+                  <TD className="py-4">{r.fill}</TD>
+                  <TD className="py-4 text-right"><StatusPill status={r.status} /></TD>
+                </tr>
+              ))}
+            </TBody>
+          </Table>
+        </TableContainer>
+      </div>
     </div>
   );
 }
