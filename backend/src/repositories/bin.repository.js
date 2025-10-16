@@ -22,10 +22,11 @@ export class BinRepository {
     return Bin.create(data);
   }
 
-  async updateSensor(id, { fillLevelPercent, weightKg }) {
+  async updateSensor(id, { fillLevelPercent, weightKg, status }) {
     const update = { lastReadingAt: new Date() };
     if (typeof fillLevelPercent === 'number') update.fillLevelPercent = Math.max(0, Math.min(100, fillLevelPercent));
     if (typeof weightKg === 'number') update.weightKg = Math.max(0, weightKg);
+    if (typeof status === 'string') update.status = status;
     return Bin.findByIdAndUpdate(id, update, { new: true });
   }
 }

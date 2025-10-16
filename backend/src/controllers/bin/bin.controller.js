@@ -15,11 +15,18 @@ export const listBins = async (_req, res) => {
  */
 export const updateBinSensor = async (req, res) => {
   const { id } = req.params;
-  const { fillLevelPercent, weightKg } = req.body || {};
-  if (typeof fillLevelPercent !== 'number' && typeof weightKg !== 'number') {
-    return res.status(400).json({ message: 'fillLevelPercent or weightKg is required' });
+  const { fillLevelPercent, weightKg, status } = req.body || {};
+  if (typeof fillLevelPercent !== 'number' && typeof weightKg !== 'number' && typeof status !== 'string') {
+    return res.status(400).json({ message: 'Provide at least one of: fillLevelPercent, weightKg, status' });
   }
-  const updated = await binRepo.updateSensor(id, { fillLevelPercent, weightKg });
+  let nextStatus = status;
+  if (!nextStatus && typeof fillLevelPercent === 'number') {
+    if (fillLevelPercent > 100) nextStatus = 'overflow';
+    else if (fillLevelPercent >= 85) nextStatus = 'needs-collection';
+    else if (fillLevelPercent <= 5) nextStatus = 'collected';
+    else nextStatus = 'normal';
+  }
+  const updated = await binRepo.updateSensor(id, { fillLevelPercent, weightKg, status: nextStatus });
   if (!updated) return res.status(404).json({ message: 'Bin not found' });
   return res.json(updated);
 };
