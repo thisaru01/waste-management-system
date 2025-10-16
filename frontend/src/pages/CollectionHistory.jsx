@@ -15,11 +15,46 @@ export default function CollectionHistory() {
 
   const records = [
     { date: 'July 15, 2024', id: 'Bin 123', location: 'Maharagama', type: 'Plastic', fill: '90 %', status: 'Pending' },
-    { date: 'July 8, 2024', id: 'Bin 123', location: 'Malabe', type: 'Food', fill: '88 %', status: 'Pending' },
-    { date: 'July 1, 2024', id: 'Bin 123', location: 'Colombo', type: 'All', fill: '100 %', status: 'Collected' },
-    { date: 'June 24, 2024', id: 'Bin 123', location: 'Pannipitiya', type: 'Chemicals', fill: '85 %', status: 'Collected' },
-    { date: 'June 17, 2024', id: 'Bin 123', location: 'Kandy', type: 'Dust', fill: '94 %', status: 'Collected' },
+    { date: 'July 8, 2024', id: 'Bin 123', location: 'Malabe', type: 'Plastic', fill: '88 %', status: 'Pending' },
+    { date: 'July 1, 2024', id: 'Bin 123', location: 'Colombo', type: 'Plastic', fill: '100 %', status: 'Collected' },
+    { date: 'June 24, 2024', id: 'Bin 123', location: 'Pannipitiya', type: 'Plastic', fill: '85 %', status: 'Collected' },
+    { date: 'June 17, 2024', id: 'Bin 123', location: 'Kandy', type: 'Plastic', fill: '94 %', status: 'Collected' },
   ];
+
+  // apply filters from the UI: type, location (substring, case-insensitive), date range and minimum fill
+  const filteredRecords = records.filter((r) => {
+    // type filter
+    if (filters.type && filters.type !== '' && r.type !== filters.type) return false;
+
+    // location filter (substring, case-insensitive)
+    if (filters.location && filters.location.trim() !== '') {
+      const loc = String(r.location ?? '').toLowerCase();
+      const q = String(filters.location).toLowerCase().trim();
+      if (!loc.includes(q)) return false;
+    }
+
+    // date range filter (inputs are YYYY-MM-DD)
+    if (filters.start) {
+      const start = new Date(filters.start);
+      const d = new Date(r.date);
+      if (d < start) return false;
+    }
+    if (filters.end) {
+      const end = new Date(filters.end);
+      const d = new Date(r.date);
+      // include end date
+      if (d > end) return false;
+    }
+
+    // fill level filter (r.fill like '90 %')
+    if (filters.fill !== undefined && filters.fill !== null && String(filters.fill) !== '') {
+      const fillNum = Number(String(r.fill).replace(/[^0-9.-]+/g, '')) || 0;
+      const minFill = Number(filters.fill) || 0;
+      if (fillNum < minFill) return false;
+    }
+
+    return true;
+  });
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -61,7 +96,7 @@ export default function CollectionHistory() {
               </tr>
             </THead>
             <TBody>
-              {records.map((r, i) => (
+              {filteredRecords.map((r, i) => (
                 <tr key={i} className="border-t">
                   <TD className="py-4">{r.date}</TD>
                   <TD className="py-4">{r.location?.description ?? r.location ?? '—'}</TD>
