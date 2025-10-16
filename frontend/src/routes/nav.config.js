@@ -35,6 +35,12 @@ export const NAV_ITEMS = [
     roles: ['authority', 'collector'],
   },
   {
+    label: 'Schedule',
+    to: '/collector/schedule',
+    icon: 'calendar',
+    roles: ['collector'],
+  },
+  {
     label: 'Payments',
     to: '/coming-soon/payments',
     icon: 'payments',

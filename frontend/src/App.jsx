@@ -8,6 +8,7 @@ import Admin from './pages/Admin.jsx';
 import AdminUsers from './pages/AdminUsers.jsx';
 import AdminSensorSim from './pages/AdminSensorSim.jsx';
 import ComingSoon from './pages/ComingSoon.jsx';
+import CollectorSchedule from './pages/CollectorSchedule.jsx';
 import Collection from './pages/Collection.jsx';
 import CollectionHistory from './pages/CollectionHistory.jsx';
 
@@ -31,6 +32,9 @@ function App() {
               <Route path="/coming-soon/:slug" element={<ComingSoon title="Coming Soon" />} />
               <Route path="/collections" element={<Collection />} />
               <Route path="/collection-history" element={<CollectionHistory />} />
+              <Route element={<RoleGuard roles={["collector"]} />}>
+                <Route path="/collector/schedule" element={<CollectorSchedule />} />
+              </Route>
             </Route>
           </Route>
         </Routes>

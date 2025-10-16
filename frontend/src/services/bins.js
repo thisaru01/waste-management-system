@@ -19,6 +19,15 @@ export async function listFlaggedBins(threshold = 85) {
 }
 
 /**
+ * List bins assigned to the authenticated collector
+ * @returns {Promise<Array>} Array of bin documents
+ */
+export async function listAssignedBinsForCollector() {
+  const { data } = await API.get('/api/bins/assigned');
+  return data;
+}
+
+/**
  * Update bin sensor readings.
  * @param {string} id Bin ID
  * @param {{fillLevelPercent?:number, weightKg?:number}} payload
@@ -41,4 +50,4 @@ export async function unassignBin(id) {
   return data;
 }
 
-export default { listBins, updateBinSensor, listFlaggedBins, assignBin, unassignBin };
+export default { listBins, updateBinSensor, listFlaggedBins, listAssignedBinsForCollector, assignBin, unassignBin };

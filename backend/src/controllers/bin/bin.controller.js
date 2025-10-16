@@ -23,6 +23,18 @@ export const listFlagged = async (req, res) => {
 };
 
 /**
+ * GET /api/bins/assigned
+ * List bins that are assigned to the authenticated collector.
+ * Accessible to users with the 'collector' role.
+ */
+export const listAssignedForMe = async (req, res) => {
+  const collectorId = req.user?.sub;
+  if (!collectorId) return res.status(401).json({ message: 'Unauthorized' });
+  const bins = await binRepo.list({ assignedCollector: collectorId }, '-__v');
+  return res.json(bins);
+};
+
+/**
  * PATCH /api/bins/:id/sensor
  * Update sensor readings: { fillLevelPercent?, weightKg? }
  */
@@ -77,4 +89,4 @@ export const clearAssignment = async (req, res) => {
   return res.json(updated);
 };
 
-export default { listBins, updateBinSensor, listFlagged, assignCollector, clearAssignment };
+export default { listBins, updateBinSensor, listFlagged, listAssignedForMe, assignCollector, clearAssignment };

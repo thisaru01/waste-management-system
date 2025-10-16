@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { listBins, updateBinSensor, listFlagged, assignCollector, clearAssignment } from '../../controllers/bin/bin.controller.js';
+import { listBins, updateBinSensor, listFlagged, listAssignedForMe, assignCollector, clearAssignment } from '../../controllers/bin/bin.controller.js';
 import { authenticate, authorize } from '../../middleware/auth.middleware.js';
 
 const router = Router();
@@ -12,5 +12,7 @@ router.patch('/:id/unassign', authenticate, authorize('authority'), clearAssignm
 
 // Authenticated users can fetch flagged bins (public-facing)
 router.get('/flagged', authenticate, listFlagged);
+// Collectors can list their assigned bins
+router.get('/assigned', authenticate, authorize('collector'), listAssignedForMe);
 
 export default router;
