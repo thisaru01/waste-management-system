@@ -1,5 +1,11 @@
 import binRepo from "../../repositories/bin.repository.js";
 
+function getSessionDurationMinutes() {
+  const raw = process.env.COLLECTION_SESSION_MINUTES;
+  const n = raw !== undefined ? Number(raw) : 15;
+  return Number.isFinite(n) && n > 0 ? n : 15;
+}
+
 /**
  * GET /api/collections/code/:code
  * Get a bin by its unique code (for QR scanning)
@@ -53,6 +59,14 @@ export const markAsCollected = async (req, res) => {
   const bin = await binRepo.findById(id);
   if (!bin) return res.status(404).json({ message: "Bin not found" });
 
+  // Only allow marking as collected from an active collection session
+  if (bin.status !== "in-collection") {
+    return res.status(400).json({
+      message:
+        "Cannot mark as collected unless an active collection session is in progress",
+    });
+  }
+
   // Verify collector is assigned to this bin (optional - can be enforced or relaxed)
   // For flexibility, allow any collector to mark as collected
   // Uncomment below to enforce assignment:
@@ -60,11 +74,23 @@ export const markAsCollected = async (req, res) => {
   //   return res.status(403).json({ message: "You are not assigned to this bin" });
   // }
 
+  // Enforce threshold: can only set collected when level <= 5%
+  if ((bin.fillLevelPercent || 0) > 5) {
+    return res.status(400).json({
+      message:
+        "Bin level must be 5% or below before marking as collected. Update sensor reading first.",
+      currentFillLevelPercent: bin.fillLevelPercent,
+    });
+  }
+
   const updated = await binRepo.updateSensor(id, {
-    fillLevelPercent: 0,
-    weightKg: 0,
+    fillLevelPercent: typeof bin.fillLevelPercent === "number" ? bin.fillLevelPercent : 0,
+    weightKg: typeof bin.weightKg === "number" ? bin.weightKg : 0,
     status: "collected",
   });
+
+  // Clear session data after successful collection
+  await binRepo.endSession(id);
 
   return res.json(updated);
 };
@@ -104,11 +130,11 @@ export const startCollectionSession = async (req, res) => {
   if (!updated)
     return res.status(404).json({ message: "Failed to start session" });
 
+  const duration = getSessionDurationMinutes();
   return res.json({
     ...updated.toObject(),
-    sessionDurationMinutes: 15,
-    message:
-      "Collection session started. You have 15 minutes to collect waste.",
+    sessionDurationMinutes: duration,
+    message: `Collection session started. You have ${duration} minute(s) to collect waste.`,
   });
 };
 
@@ -146,50 +172,56 @@ export const checkCollectionSession = async (req, res) => {
   const sessionStartTime = new Date(bin.sessionStartedAt);
   const now = new Date();
   const elapsedMinutes = (now - sessionStartTime) / (1000 * 60);
-  const sessionExpired = elapsedMinutes > 15;
+  const duration = getSessionDurationMinutes();
+  const sessionExpired = elapsedMinutes > duration;
 
   // Check if fill level has been reduced
   const initialLevel = bin.sessionInitialFillLevel || 0;
   const currentLevel = bin.fillLevelPercent || 0;
-  const levelReduced = currentLevel < initialLevel;
+  const thresholdMet = currentLevel <= 5; // Only finalize when <= 5%
 
   let sessionStatus = "active";
   let message = "Session is active. Monitoring bin level...";
+  let updatedStatus = bin.status;
 
-  if (levelReduced) {
-    // Bin level reduced - mark as collected
+  if (thresholdMet) {
+    // Bin level meets threshold - mark as collected and end session
     await binRepo.updateSensor(id, {
       status: "collected",
     });
     await binRepo.endSession(id);
 
     sessionStatus = "completed";
-    message = "Waste collected successfully! Bin level has been reduced.";
+    message = "Waste collected successfully! Bin level is 5% or below.";
+    updatedStatus = "collected";
   } else if (sessionExpired) {
     // Session expired without collection
+    await binRepo.updateSensor(id, { status: "assigned" });
     await binRepo.endSession(id);
     sessionStatus = "expired";
     message =
       "Session expired. Bin level was not reduced. Please scan again to restart.";
+    updatedStatus = "assigned";
   }
 
   return res.json({
-    hasActiveSession: !sessionExpired && !levelReduced,
+    hasActiveSession: !sessionExpired && !thresholdMet,
     sessionStatus,
     message,
     sessionData: {
       startedAt: bin.sessionStartedAt,
       elapsedMinutes: Math.floor(elapsedMinutes),
-      remainingMinutes: Math.max(0, 15 - Math.floor(elapsedMinutes)),
+      remainingMinutes: Math.max(0, Math.ceil(duration - elapsedMinutes)),
+      sessionDurationMinutes: duration,
       initialFillLevel: initialLevel,
       currentFillLevel: currentLevel,
-      levelReduced,
+      thresholdMet,
       sessionExpired,
     },
     bin: {
       id: bin._id,
       code: bin.code,
-      status: bin.status,
+      status: updatedStatus,
       fillLevelPercent: bin.fillLevelPercent,
     },
   });

@@ -37,6 +37,9 @@ export function useCollectionSession(binId, isActive) {
   const timerIntervalRef = useRef(null);
   const binIdRef = useRef(binId);
   const isActiveRef = useRef(isActive);
+  const sessionDeadlineRef = useRef(null); // ms timestamp when session should end
+  const sessionDurationMinutesRef = useRef(15);
+  const SESSION_STORAGE_KEY = "activeBinSession";
 
   // Keep refs in sync with props
   useEffect(() => {
@@ -69,6 +72,18 @@ export function useCollectionSession(binId, isActive) {
 
       setSessionData(response.sessionData);
 
+      // Set/refresh deadline from server-provided start time for stable countdown
+      if (response?.sessionData?.startedAt) {
+        const startedMs = new Date(response.sessionData.startedAt).getTime();
+        const dur = Number(response?.sessionData?.sessionDurationMinutes) || sessionDurationMinutesRef.current || 15;
+        sessionDurationMinutesRef.current = dur;
+        let deadline = startedMs + dur * 60 * 1000;
+        // Clamp deadline so remaining never exceeds duration due to clock skew
+        const nowMs = Date.now();
+        const maxDeadline = nowMs + dur * 60 * 1000;
+        sessionDeadlineRef.current = Math.min(deadline, maxDeadline);
+      }
+
       if (response.sessionStatus === "completed") {
         setSessionStatus(SESSION_STATUS.COMPLETED);
         stopMonitoring();
@@ -77,14 +92,6 @@ export function useCollectionSession(binId, isActive) {
         stopMonitoring();
       } else if (response.sessionStatus === "active") {
         setSessionStatus(SESSION_STATUS.ACTIVE);
-
-        // Update remaining time from server
-        if (response.sessionData) {
-          const minutes = response.sessionData.remainingMinutes || 0;
-          const totalSeconds = minutes * 60;
-          setRemainingMinutes(Math.floor(totalSeconds / 60));
-          setRemainingSeconds(totalSeconds % 60);
-        }
       }
 
       setError(null);
@@ -110,8 +117,16 @@ export function useCollectionSession(binId, isActive) {
     if (!binId) return;
 
     setSessionStatus(SESSION_STATUS.ACTIVE);
-    setRemainingMinutes(15);
-    setRemainingSeconds(0);
+  // Optimistically set a deadline with last-known duration; corrected by first check
+  const dur = sessionDurationMinutesRef.current || 15;
+  sessionDeadlineRef.current = Date.now() + dur * 60 * 1000;
+    // Initialize visible countdown from computed deadline
+    const initialTotal = Math.max(
+      0,
+      Math.floor((sessionDeadlineRef.current - Date.now()) / 1000)
+    );
+    setRemainingMinutes(Math.floor(initialTotal / 60));
+    setRemainingSeconds(initialTotal % 60);
     setError(null);
 
     // Initial check
@@ -124,19 +139,16 @@ export function useCollectionSession(binId, isActive) {
 
     // Update countdown timer every second for better UX
     timerIntervalRef.current = setInterval(() => {
-      setRemainingSeconds((prevSeconds) => {
-        if (prevSeconds === 0) {
-          // Need to borrow from minutes
-          setRemainingMinutes((prevMinutes) => {
-            if (prevMinutes > 0) {
-              return prevMinutes - 1;
-            }
-            return 0;
-          });
-          return 59;
-        }
-        return prevSeconds - 1;
-      });
+      const deadline = sessionDeadlineRef.current;
+      if (!deadline) return;
+      const now = Date.now();
+      const rawLeft = Math.floor((deadline - now) / 1000);
+      const maxLeft = Math.floor((sessionDurationMinutesRef.current || 15) * 60);
+      const totalSecondsLeft = Math.max(0, Math.min(maxLeft, rawLeft));
+      const mins = Math.floor(totalSecondsLeft / 60);
+      const secs = totalSecondsLeft % 60;
+      setRemainingMinutes(mins);
+      setRemainingSeconds(secs);
     }, 1000); // 1 second
   }, [binId, checkSession]);
 
@@ -150,6 +162,7 @@ export function useCollectionSession(binId, isActive) {
     setRemainingMinutes(15);
     setRemainingSeconds(0);
     setError(null);
+    sessionDeadlineRef.current = null;
   }, [stopMonitoring]);
 
   /**
@@ -157,6 +170,19 @@ export function useCollectionSession(binId, isActive) {
    */
   useEffect(() => {
     if (isActive && binId) {
+      // If we have persisted session info (from scan page), use it to seed the deadline
+      try {
+        const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.binId === binId && parsed?.startedAt) {
+            const dur = Number(parsed?.sessionDurationMinutes) || sessionDurationMinutesRef.current || 15;
+            sessionDurationMinutesRef.current = dur;
+            const startedMs = new Date(parsed.startedAt).getTime();
+            sessionDeadlineRef.current = startedMs + dur * 60 * 1000;
+          }
+        }
+      } catch (_) {}
       startMonitoring();
     } else {
       stopMonitoring();

@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "../components/ui/Card.jsx";
 import Button from "../components/ui/Button.jsx";
 import Input from "../components/ui/Input.jsx";
-import { getBinByCode, startCollectionSession } from "../services/bins.js";
+import {
+  getBinByCode,
+  startCollectionSession,
+  checkCollectionSession,
+} from "../services/bins.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
   useCollectionSession,
@@ -40,6 +44,8 @@ const SCAN_STATE = {
 export default function CollectorScanBin() {
   const { user } = useAuth();
 
+  const ACTIVE_SESSION_STORAGE_KEY = "activeBinSession";
+
   // Scanning state management
   const [scanState, setScanState] = useState(SCAN_STATE.IDLE);
   const [binCode, setBinCode] = useState("");
@@ -60,6 +66,52 @@ export default function CollectorScanBin() {
     scannedBin?._id,
     scanState === SCAN_STATE.SESSION_ACTIVE
   );
+
+  // No auto-finish here; finishing schedule is done manually from the Schedule page
+
+  // Restore active session on mount (if user navigated away and returned)
+  useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        const raw = localStorage.getItem(ACTIVE_SESSION_STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!parsed?.binId) return;
+
+        // Verify with backend whether session is still active
+        try {
+          const res = await checkCollectionSession(parsed.binId);
+          if (res?.hasActiveSession) {
+            // Fetch the full bin by code is not needed; we can synthesize minimal bin
+            setScannedBin({ _id: parsed.binId, code: res?.bin?.code });
+            setScanState(SCAN_STATE.SESSION_ACTIVE);
+            // Keep stored data fresh
+            const startedAt = res?.sessionData?.startedAt || parsed.startedAt;
+            const duration =
+              res?.sessionData?.sessionDurationMinutes ||
+              parsed.sessionDurationMinutes ||
+              15;
+            localStorage.setItem(
+              ACTIVE_SESSION_STORAGE_KEY,
+              JSON.stringify({
+                binId: parsed.binId,
+                startedAt,
+                sessionDurationMinutes: duration,
+              })
+            );
+          } else {
+            localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
+          }
+        } catch {
+          // If backend says no session or 400, clear stored session
+          localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
+        }
+      } catch {
+        // ignore errors reading localStorage
+      }
+    };
+    restoreSession();
+  }, []);
 
   /**
    * Simulates QR code scanning with random bin code generation
@@ -123,7 +175,28 @@ export default function CollectorScanBin() {
       setAssignmentError(null);
 
       // Automatically start collection session after successful scan
-      await startCollectionSession(bin._id);
+      const startResp = await startCollectionSession(bin._id);
+      // Persist active session so it survives navigation (use server start time and duration)
+      try {
+        const startedAt =
+          startResp?.sessionStartedAt ||
+          startResp?.sessionData?.startedAt ||
+          Date.now();
+        const duration =
+          startResp?.sessionDurationMinutes ||
+          startResp?.sessionData?.sessionDurationMinutes ||
+          15;
+        localStorage.setItem(
+          ACTIVE_SESSION_STORAGE_KEY,
+          JSON.stringify({
+            binId: bin._id,
+            startedAt,
+            sessionDurationMinutes: duration,
+          })
+        );
+      } catch {
+        // ignore persistence errors
+      }
       setScanState(SCAN_STATE.SESSION_ACTIVE);
     } catch (e) {
       if (e?.response?.status === 403) {
@@ -184,6 +257,11 @@ export default function CollectorScanBin() {
     resetError();
     setScanState(SCAN_STATE.IDLE);
     resetSession();
+    try {
+      localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
+    } catch {
+      // ignore persistence errors
+    }
   };
 
   /**
@@ -306,11 +384,11 @@ export default function CollectorScanBin() {
               <span className="text-gray-600">Current Fill Level:</span>
               <span
                 className={`font-semibold ${
-                  sessionData.levelReduced ? "text-green-600" : "text-gray-900"
+                  sessionData.thresholdMet ? "text-green-600" : "text-gray-900"
                 }`}
               >
                 {sessionData.currentFillLevel}%
-                {sessionData.levelReduced && " ↓"}
+                {sessionData.thresholdMet && " ✓"}
               </span>
             </div>
           </div>
@@ -320,7 +398,7 @@ export default function CollectorScanBin() {
           <p className="text-xs text-blue-800 text-center">
             <strong>Monitoring:</strong> Collecting waste from this bin. The
             system will automatically mark it as collected when the bin level
-            reduces.
+            reaches 5% or below.
           </p>
         </div>
       </div>
@@ -339,6 +417,49 @@ export default function CollectorScanBin() {
         <CardContent>
           {/* Session Status Feedback */}
           {renderSessionFeedback()}
+          {/* Assigned Bin Confirmation (shown above session view) */}
+          {scanState === SCAN_STATE.SESSION_ACTIVE && (
+            <div className="mb-4 p-4 bg-green-50 border-2 border-green-500 rounded-lg">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                  <svg
+                    className="w-5 h-5 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm text-green-900 font-semibold">
+                    Assigned bin confirmed
+                  </p>
+                  <p className="text-xs text-green-800">
+                    {scannedBin?.code ? (
+                      <>
+                        Bin{" "}
+                        <span className="font-mono font-semibold">
+                          {scannedBin.code}
+                        </span>{" "}
+                        is assigned to you. Please proceed to collect the waste.
+                      </>
+                    ) : (
+                      <>
+                        This bin is assigned to you. Please proceed to collect
+                        the waste.
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           {renderActiveSession()}
 
           {/* Error Message */}
@@ -490,7 +611,7 @@ export default function CollectorScanBin() {
                 <strong>How it works:</strong> Scan or enter a bin ID. If the
                 bin is assigned to you, a 15-minute collection session will
                 start automatically. The system will automatically detect when
-                waste is collected.
+                the bin reaches 5% or below and mark it as collected.
               </p>
             </div>
           )}

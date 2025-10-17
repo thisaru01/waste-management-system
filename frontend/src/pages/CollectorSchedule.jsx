@@ -8,7 +8,9 @@ import {
   TD,
   THead,
 } from "../components/ui/Table.jsx";
+import Button from "../components/ui/Button.jsx";
 import { listAssignedBinsForCollector } from "../services/bins.js";
+import { finishTodaySchedule } from "../services/history.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 /**
@@ -93,6 +95,7 @@ export default function CollectorSchedule() {
   const [bins, setBins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [savingHistory, setSavingHistory] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -196,6 +199,34 @@ export default function CollectorSchedule() {
                     </TBody>
                   </Table>
                 </TableContainer>
+              </div>
+
+              {/* Finish Schedule Button */}
+              <div className="mt-4 flex justify-end">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  disabled={
+                    savingHistory || bins.some((b) => b.status !== "collected")
+                  }
+                  onClick={async () => {
+                    try {
+                      setSavingHistory(true);
+                      await finishTodaySchedule();
+                      // Optionally, provide user feedback or refresh
+                    } catch (e) {
+                      setError(
+                        e?.response?.data?.message ||
+                          e.message ||
+                          "Failed to finish schedule"
+                      );
+                    } finally {
+                      setSavingHistory(false);
+                    }
+                  }}
+                >
+                  {savingHistory ? "Saving..." : "Finished Schedule"}
+                </Button>
               </div>
             </>
           )}
