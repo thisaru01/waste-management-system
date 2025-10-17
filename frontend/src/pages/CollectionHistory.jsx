@@ -23,6 +23,53 @@ function StatusPill({ status }) {
   return <span className={cls}>{status}</span>;
 }
 
+function HistoryCard({ record, showCollector }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-sm text-gray-500">Date</div>
+          <div className="font-medium text-gray-900">
+            {record.finishedAt
+              ? new Date(record.finishedAt).toLocaleString()
+              : "-"}
+          </div>
+        </div>
+        <StatusPill status={record.status} />
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <div className="text-gray-500">Bin</div>
+          <div className="font-medium text-gray-900">{record.binCode}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">Waste Type</div>
+          <div className="font-medium text-gray-900 capitalize">
+            {record.type}
+          </div>
+        </div>
+        <div>
+          <div className="text-gray-500">Fill Level</div>
+          <div className="font-medium text-gray-900">{record.fill}</div>
+        </div>
+        <div className="col-span-2">
+          <div className="text-gray-500">Location</div>
+          <div className="font-medium text-gray-900">{record.location}</div>
+        </div>
+        {showCollector && (
+          <div className="col-span-2">
+            <div className="text-gray-500">Collector</div>
+            <div className="font-medium text-gray-900">
+              {record.collector || "-"}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function CollectionHistory() {
   const { hasRole } = useAuth();
   const [filters, setFilters] = useState({
@@ -182,7 +229,7 @@ export default function CollectionHistory() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mb-6">
         <div className="md:col-span-2">
           <label className="block text-sm text-gray-700 mb-1">Date range</label>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <Input
               type="date"
               value={filters.start}
@@ -230,42 +277,64 @@ export default function CollectionHistory() {
           <div className="p-4 text-sm text-gray-600">Loading history…</div>
         )}
         {error && <div className="p-4 text-sm text-red-600">{error}</div>}
-        <TableContainer>
-          <Table>
-            <THead>
-              <tr>
-                <TH>Date</TH>
-                <TH>Bin</TH>
-                <TH>Waste Type</TH>
-                <TH>Fill Level</TH>
-                <TH>Location</TH>
-                {hasRole("authority") && <TH>Collector</TH>}
-                <TH>Status</TH>
-              </tr>
-            </THead>
-            <TBody>
-              {filteredRecords.map((r, i) => (
-                <tr key={i} className="border-t">
-                  <TD className="py-4">
-                    {r.finishedAt
-                      ? new Date(r.finishedAt).toLocaleString()
-                      : "-"}
-                  </TD>
-                  <TD className="py-4">{r.binCode}</TD>
-                  <TD className="py-4">{r.type}</TD>
-                  <TD className="py-4">{r.fill}</TD>
-                  <TD className="py-4">{r.location}</TD>
-                  {hasRole("authority") && (
-                    <TD className="py-4">{r.collector || "-"}</TD>
-                  )}
-                  <TD className="py-4 text-right">
-                    <StatusPill status={r.status} />
-                  </TD>
+        {!loading && !error && filteredRecords.length === 0 && (
+          <div className="p-6 text-center text-sm text-gray-600">
+            No records found.
+          </div>
+        )}
+
+        {/* Mobile cards */}
+        {!loading && !error && filteredRecords.length > 0 && (
+          <div className="md:hidden p-3 space-y-3">
+            {filteredRecords.map((r, i) => (
+              <HistoryCard
+                key={i}
+                record={r}
+                showCollector={hasRole("authority")}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Desktop table */}
+        <div className="hidden md:block">
+          <TableContainer>
+            <Table>
+              <THead>
+                <tr>
+                  <TH>Date</TH>
+                  <TH>Bin</TH>
+                  <TH>Waste Type</TH>
+                  <TH>Fill Level</TH>
+                  <TH>Location</TH>
+                  {hasRole("authority") && <TH>Collector</TH>}
+                  <TH className="text-right">Status</TH>
                 </tr>
-              ))}
-            </TBody>
-          </Table>
-        </TableContainer>
+              </THead>
+              <TBody>
+                {filteredRecords.map((r, i) => (
+                  <tr key={i} className="border-t">
+                    <TD className="py-4">
+                      {r.finishedAt
+                        ? new Date(r.finishedAt).toLocaleString()
+                        : "-"}
+                    </TD>
+                    <TD className="py-4">{r.binCode}</TD>
+                    <TD className="py-4">{r.type}</TD>
+                    <TD className="py-4">{r.fill}</TD>
+                    <TD className="py-4">{r.location}</TD>
+                    {hasRole("authority") && (
+                      <TD className="py-4">{r.collector || "-"}</TD>
+                    )}
+                    <TD className="py-4 text-right">
+                      <StatusPill status={r.status} />
+                    </TD>
+                  </tr>
+                ))}
+              </TBody>
+            </Table>
+          </TableContainer>
+        </div>
       </div>
     </div>
   );
