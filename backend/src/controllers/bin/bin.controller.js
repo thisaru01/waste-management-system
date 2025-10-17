@@ -22,6 +22,19 @@ export const listFlagged = async (req, res) => {
 };
 
 /**
+ * GET /api/bins/unauthorized
+ * List bins that have been flagged as unauthorized-collection
+ * Accessible to authority users.
+ */
+export const listUnauthorized = async (_req, res) => {
+  const bins = await binRepo.list(
+    { status: "unauthorized-collection" },
+    "-__v"
+  );
+  return res.json(bins);
+};
+
+/**
  * PATCH /api/bins/:id/sensor
  * Update sensor readings: { fillLevelPercent?, weightKg? }
  */
@@ -47,6 +60,8 @@ export const updateBinSensor = async (req, res) => {
       ? Math.max(0, Math.min(100, fillLevelPercent))
       : bin.fillLevelPercent;
   let nextStatus = status; // requested status if provided
+  const prevFill =
+    typeof bin.fillLevelPercent === "number" ? bin.fillLevelPercent : 0;
 
   // Business rules:
   // 1) When bin is in 'in-collection', the ONLY allowed next status is 'collected'.
@@ -82,7 +97,15 @@ export const updateBinSensor = async (req, res) => {
   } else {
     // Outside of an active collection session, don't auto-set 'collected'.
     // Compute status from thresholds unless an explicit non-'collected' status is provided.
-    if (typeof nextStatus === "string") {
+    // 0) If fill level reduced while bin is 'assigned' or 'needs-collection',
+    //    mark as 'unauthorized-collection' regardless of requested status.
+    const reducedOutsideSession =
+      typeof fillLevelPercent === "number" && newFill < prevFill;
+    const isWatchStatuses =
+      bin.status === "assigned" || bin.status === "needs-collection";
+    if (reducedOutsideSession && isWatchStatuses) {
+      nextStatus = "unauthorized-collection";
+    } else if (typeof nextStatus === "string") {
       if (nextStatus === "collected") {
         return res.status(400).json({
           message:
@@ -111,4 +134,5 @@ export default {
   listBins,
   updateBinSensor,
   listFlagged,
+  listUnauthorized,
 };
