@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import PageHeader from "../components/ui/PageHeader.jsx";
 import Button from "../components/ui/Button.jsx";
 import Input from "../components/ui/Input.jsx";
+import Select from "../components/ui/Select.jsx";
 import { Card, CardHeader, CardContent } from "../components/ui/Card.jsx";
 import {
   TableContainer,
@@ -81,6 +82,9 @@ export default function Collection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
+  // quantity left empty string to allow a placeholder option to be shown
+  // the actual value when selected will be converted to Number
+  const [quantity, setQuantity] = useState("");
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignForBin, setAssignForBin] = useState(null);
   const [collectors, setCollectors] = useState([]);
@@ -239,6 +243,20 @@ export default function Collection() {
                     onChange={(e) => setLocationFilter(e.target.value)}
                     aria-label="Filter bins by location"
                   />
+                </div>
+                <div className="w-24">
+                  <Select
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value === "" ? "" : Number(e.target.value))}
+                    aria-label="Select quantity"
+                  >
+                    <option value="" disabled>
+                      Quantity
+                    </option>
+                    <option value={1}>1</option>
+                    <option value={2}>2</option>
+                    <option value={3}>3</option>
+                  </Select>
                 </div>
               </div>
             </div>
