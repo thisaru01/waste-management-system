@@ -1,4 +1,5 @@
 import request from "supertest";
+import { jest } from "@jest/globals";
 import jwt from "jsonwebtoken";
 import app from "../src/app.js";
 import binRepo from "../src/repositories/bin.repository.js";
@@ -349,5 +350,89 @@ describe("Collector end-to-end flow (no DB)", () => {
       .set(auth(collectorToken))
       .expect(400);
     expect(res2.body.message).toMatch(/active collection session/i);
+  });
+});
+
+// Additional coverage to exercise uncovered branches
+describe("Collector flow - additional branches", () => {
+  const collectorId = "collector_X";
+  const otherCollectorId = "collector_Y";
+  const adminToken = makeToken({ sub: "admin_X", roles: ["admin"], email: "admin@example.com" });
+  const collectorToken = makeToken({ sub: collectorId, roles: ["collector"], email: "collector@example.com" });
+  const otherCollectorToken = makeToken({ sub: otherCollectorId, roles: ["collector"], email: "other@example.com" });
+
+  let b1;
+
+  beforeEach(async () => {
+    mem.bins.clear();
+    mem.histories.length = 0;
+    b1 = (await binRepo.create({ _id: "bx1", code: "PUB-X1", fillLevelPercent: 87, status: "needs-collection", assignedCollector: collectorId })).toObject();
+  });
+
+  it("getBinByCode: unknown code -> 404", async () => {
+    const res = await request(app)
+      .get("/api/collections/code/NO-SUCH")
+      .set(auth(collectorToken))
+      .expect(404);
+    expect((res.body.message || "").toLowerCase()).toMatch(/not found/);
+  });
+
+  it("finish-today with no assigned bins -> 400", async () => {
+    // Clear assignment for all bins
+    for (const id of Array.from(mem.bins.keys())) {
+      const rec = mem.bins.get(id);
+      rec.assignedCollector = null;
+      mem.bins.set(id, rec);
+    }
+    const res = await request(app)
+      .post("/api/history/finish-today")
+      .set(auth(collectorToken))
+      .expect(400);
+    expect((res.body.message || "").toLowerCase()).toMatch(/no bins assigned/);
+  });
+
+  it("start-session: repo fails to start -> 404 'Failed to start session'", async () => {
+    const spy = jest.spyOn(binRepo, "startSession").mockResolvedValueOnce(null);
+    const res = await request(app)
+      .post(`/api/collections/${b1._id}/start-session`)
+      .set(auth(collectorToken))
+      .expect(404);
+    expect((res.body.message || "").toLowerCase()).toMatch(/failed to start session/);
+    spy.mockRestore();
+  });
+
+  it("check-session: 403 when bin assigned to another collector", async () => {
+    // Reassign to other collector
+    const rec = mem.bins.get(b1._id);
+    rec.assignedCollector = otherCollectorId;
+    mem.bins.set(b1._id, rec);
+
+    const res = await request(app)
+      .get(`/api/collections/${b1._id}/check-session`)
+      .set(auth(collectorToken))
+      .expect(403);
+    expect((res.body.message || "").toLowerCase()).toMatch(/not assigned/);
+  });
+
+  it("manual collect succeeds at boundary 5% when in session", async () => {
+    // Start session
+    await request(app)
+      .post(`/api/collections/${b1._id}/start-session`)
+      .set(auth(collectorToken))
+      .expect(200);
+    // Set to exactly 5% without auto-marking collected (avoid sensor route that auto-collects)
+    const rec = mem.bins.get(b1._id);
+    rec.fillLevelPercent = 5;
+    // keep status as in-collection
+    rec.status = "in-collection";
+    mem.bins.set(b1._id, rec);
+    // Manual collect path
+    const res = await request(app)
+      .patch(`/api/collections/${b1._id}/collect`)
+      .set(auth(collectorToken))
+      .expect(200);
+    // Some controllers return updated bin directly; ensure status reflects collected
+    const status = res.body.status || res.body?.bin?.status;
+    expect(status).toBe("collected");
   });
 });
