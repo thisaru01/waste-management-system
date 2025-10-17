@@ -445,23 +445,7 @@ export default function Collection() {
           </CardContent>
         </Card>
 
-        <div className="mt-8 grid grid-cols-1 gap-6">
-          <div>
-            <h4 className="text-sm font-medium">Next Scheduled Pickup</h4>
-            <div className="text-xs text-gray-500">
-              {nextPickup.toDateString()}
-            </div>
-            <Countdown target={target} />
-          </div>
-
-          <div>
-            <h4 className="text-sm font-medium">Outstanding Payment</h4>
-            <div className="text-xs text-green-600">$25.00</div>
-            <div className="mt-3">
-              <Button variant="success">Payments →</Button>
-            </div>
-          </div>
-        </div>
+        
       </div>
       {/* Assign Collector Modal (authority only) */}
       {canAssign && (
