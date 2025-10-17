@@ -67,6 +67,8 @@ export default function CollectorScanBin() {
     scanState === SCAN_STATE.SESSION_ACTIVE
   );
 
+  // No auto-finish here; finishing schedule is done manually from the Schedule page
+
   // Restore active session on mount (if user navigated away and returned)
   useEffect(() => {
     const restoreSession = async () => {
@@ -85,24 +87,30 @@ export default function CollectorScanBin() {
             setScanState(SCAN_STATE.SESSION_ACTIVE);
             // Keep stored data fresh
             const startedAt = res?.sessionData?.startedAt || parsed.startedAt;
-            const duration = res?.sessionData?.sessionDurationMinutes || parsed.sessionDurationMinutes || 15;
+            const duration =
+              res?.sessionData?.sessionDurationMinutes ||
+              parsed.sessionDurationMinutes ||
+              15;
             localStorage.setItem(
               ACTIVE_SESSION_STORAGE_KEY,
-              JSON.stringify({ binId: parsed.binId, startedAt, sessionDurationMinutes: duration })
+              JSON.stringify({
+                binId: parsed.binId,
+                startedAt,
+                sessionDurationMinutes: duration,
+              })
             );
           } else {
             localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
           }
-        } catch (err) {
+        } catch {
           // If backend says no session or 400, clear stored session
           localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
         }
-      } catch (_) {
-        // ignore
+      } catch {
+        // ignore errors reading localStorage
       }
     };
     restoreSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**
@@ -170,13 +178,25 @@ export default function CollectorScanBin() {
       const startResp = await startCollectionSession(bin._id);
       // Persist active session so it survives navigation (use server start time and duration)
       try {
-        const startedAt = startResp?.sessionStartedAt || startResp?.sessionData?.startedAt || Date.now();
-        const duration = startResp?.sessionDurationMinutes || startResp?.sessionData?.sessionDurationMinutes || 15;
+        const startedAt =
+          startResp?.sessionStartedAt ||
+          startResp?.sessionData?.startedAt ||
+          Date.now();
+        const duration =
+          startResp?.sessionDurationMinutes ||
+          startResp?.sessionData?.sessionDurationMinutes ||
+          15;
         localStorage.setItem(
           ACTIVE_SESSION_STORAGE_KEY,
-          JSON.stringify({ binId: bin._id, startedAt, sessionDurationMinutes: duration })
+          JSON.stringify({
+            binId: bin._id,
+            startedAt,
+            sessionDurationMinutes: duration,
+          })
         );
-      } catch (_) {}
+      } catch {
+        // ignore persistence errors
+      }
       setScanState(SCAN_STATE.SESSION_ACTIVE);
     } catch (e) {
       if (e?.response?.status === 403) {
@@ -239,7 +259,9 @@ export default function CollectorScanBin() {
     resetSession();
     try {
       localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
-    } catch (_) {}
+    } catch {
+      // ignore persistence errors
+    }
   };
 
   /**
@@ -421,10 +443,17 @@ export default function CollectorScanBin() {
                   <p className="text-xs text-green-800">
                     {scannedBin?.code ? (
                       <>
-                        Bin <span className="font-mono font-semibold">{scannedBin.code}</span> is assigned to you. Please proceed to collect the waste.
+                        Bin{" "}
+                        <span className="font-mono font-semibold">
+                          {scannedBin.code}
+                        </span>{" "}
+                        is assigned to you. Please proceed to collect the waste.
                       </>
                     ) : (
-                      <>This bin is assigned to you. Please proceed to collect the waste.</>
+                      <>
+                        This bin is assigned to you. Please proceed to collect
+                        the waste.
+                      </>
                     )}
                   </p>
                 </div>
