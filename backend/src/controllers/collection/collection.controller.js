@@ -53,6 +53,14 @@ export const markAsCollected = async (req, res) => {
   const bin = await binRepo.findById(id);
   if (!bin) return res.status(404).json({ message: "Bin not found" });
 
+  // Only allow marking as collected from an active collection session
+  if (bin.status !== "in-collection") {
+    return res.status(400).json({
+      message:
+        "Cannot mark as collected unless an active collection session is in progress",
+    });
+  }
+
   // Verify collector is assigned to this bin (optional - can be enforced or relaxed)
   // For flexibility, allow any collector to mark as collected
   // Uncomment below to enforce assignment:
@@ -60,11 +68,23 @@ export const markAsCollected = async (req, res) => {
   //   return res.status(403).json({ message: "You are not assigned to this bin" });
   // }
 
+  // Enforce threshold: can only set collected when level <= 5%
+  if ((bin.fillLevelPercent || 0) > 5) {
+    return res.status(400).json({
+      message:
+        "Bin level must be 5% or below before marking as collected. Update sensor reading first.",
+      currentFillLevelPercent: bin.fillLevelPercent,
+    });
+  }
+
   const updated = await binRepo.updateSensor(id, {
-    fillLevelPercent: 0,
-    weightKg: 0,
+    fillLevelPercent: typeof bin.fillLevelPercent === "number" ? bin.fillLevelPercent : 0,
+    weightKg: typeof bin.weightKg === "number" ? bin.weightKg : 0,
     status: "collected",
   });
+
+  // Clear session data after successful collection
+  await binRepo.endSession(id);
 
   return res.json(updated);
 };
@@ -151,20 +171,20 @@ export const checkCollectionSession = async (req, res) => {
   // Check if fill level has been reduced
   const initialLevel = bin.sessionInitialFillLevel || 0;
   const currentLevel = bin.fillLevelPercent || 0;
-  const levelReduced = currentLevel < initialLevel;
+  const thresholdMet = currentLevel <= 5; // Only finalize when <= 5%
 
   let sessionStatus = "active";
   let message = "Session is active. Monitoring bin level...";
 
-  if (levelReduced) {
-    // Bin level reduced - mark as collected
+  if (thresholdMet) {
+    // Bin level meets threshold - mark as collected and end session
     await binRepo.updateSensor(id, {
       status: "collected",
     });
     await binRepo.endSession(id);
 
     sessionStatus = "completed";
-    message = "Waste collected successfully! Bin level has been reduced.";
+    message = "Waste collected successfully! Bin level is 5% or below.";
   } else if (sessionExpired) {
     // Session expired without collection
     await binRepo.endSession(id);
@@ -174,7 +194,7 @@ export const checkCollectionSession = async (req, res) => {
   }
 
   return res.json({
-    hasActiveSession: !sessionExpired && !levelReduced,
+    hasActiveSession: !sessionExpired && !thresholdMet,
     sessionStatus,
     message,
     sessionData: {
@@ -183,7 +203,7 @@ export const checkCollectionSession = async (req, res) => {
       remainingMinutes: Math.max(0, 15 - Math.floor(elapsedMinutes)),
       initialFillLevel: initialLevel,
       currentFillLevel: currentLevel,
-      levelReduced,
+      thresholdMet,
       sessionExpired,
     },
     bin: {

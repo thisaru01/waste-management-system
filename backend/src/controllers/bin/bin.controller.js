@@ -37,14 +37,67 @@ export const updateBinSensor = async (req, res) => {
       message: "Provide at least one of: fillLevelPercent, weightKg, status",
     });
   }
-  let nextStatus = status;
-  if (!nextStatus && typeof fillLevelPercent === "number") {
-    // treat 100% as overflow
-    if (fillLevelPercent >= 100) nextStatus = "overflow";
-    else if (fillLevelPercent >= 85) nextStatus = "needs-collection";
-    else if (fillLevelPercent <= 5) nextStatus = "collected";
-    else nextStatus = "normal";
+  // Fetch current bin to enforce transition rules
+  const bin = await binRepo.findById(id);
+  if (!bin) return res.status(404).json({ message: "Bin not found" });
+
+  // Determine candidate new values
+  const newFill =
+    typeof fillLevelPercent === "number"
+      ? Math.max(0, Math.min(100, fillLevelPercent))
+      : bin.fillLevelPercent;
+  let nextStatus = status; // requested status if provided
+
+  // Business rules:
+  // 1) When bin is in 'in-collection', the ONLY allowed next status is 'collected'.
+  // 2) Only change to 'collected' AFTER the bin level reduces to 5% or below.
+  if (bin.status === "in-collection") {
+    // If a status is explicitly requested and it's not 'collected', reject.
+    if (typeof nextStatus === "string" && nextStatus !== "collected") {
+      return res.status(400).json({
+        message:
+          "While in-collection, status can only change to 'collected' and only after fillLevelPercent <= 5%",
+      });
+    }
+
+    // If request wants to set collected, ensure level is <= 5 after this update
+    if (nextStatus === "collected") {
+      if (newFill > 5) {
+        return res.status(400).json({
+          message:
+            "Cannot mark as collected until bin level is 5% or below during the collection session",
+        });
+      }
+    }
+
+    // If status not explicitly requested, auto-mark collected only when level <= 5
+    if (!nextStatus) {
+      if (typeof fillLevelPercent === "number" && newFill <= 5) {
+        nextStatus = "collected";
+      } else {
+        // Keep status as in-collection until threshold is met
+        nextStatus = bin.status;
+      }
+    }
+  } else {
+    // Outside of an active collection session, don't auto-set 'collected'.
+    // Compute status from thresholds unless an explicit non-'collected' status is provided.
+    if (typeof nextStatus === "string") {
+      if (nextStatus === "collected") {
+        return res.status(400).json({
+          message:
+            "Cannot change status to 'collected' outside an active collection session (in-collection)",
+        });
+      }
+      // Allow other manual statuses
+    } else if (typeof fillLevelPercent === "number") {
+      // treat 100% as overflow; >=85 needs-collection; <=5 normal (not collected outside session)
+      if (newFill >= 100) nextStatus = "overflow";
+      else if (newFill >= 85) nextStatus = "needs-collection";
+      else nextStatus = "normal";
+    }
   }
+
   const updated = await binRepo.updateSensor(id, {
     fillLevelPercent,
     weightKg,
