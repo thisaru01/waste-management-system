@@ -436,12 +436,7 @@ export default function Collection() {
               </TableContainer>
             </div>
 
-            <div className="mt-6 flex items-center justify-center gap-4">
-              {/* bulk assign removed per user preference */}
-              <div>
-                <Button variant="success">View All →</Button>
-              </div>
-            </div>
+            
           </CardContent>
         </Card>
 
