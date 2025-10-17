@@ -85,6 +85,10 @@ export default function Collection() {
   // quantity left empty string to allow a placeholder option to be shown
   // the actual value when selected will be converted to Number
   const [quantity, setQuantity] = useState("");
+  const [selectedBinIds, setSelectedBinIds] = useState([]);
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
+  const [selectedCollectorIdBulk, setSelectedCollectorIdBulk] = useState("");
+  const [savingBulkAssign, setSavingBulkAssign] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignForBin, setAssignForBin] = useState(null);
   const [collectors, setCollectors] = useState([]);
@@ -150,6 +154,59 @@ export default function Collection() {
     }
   };
 
+  /**
+   * Open the bulk assign modal and ensure collectors are loaded.
+   */
+  const openBulkAssignModal = async () => {
+    setError("");
+    setSelectedCollectorIdBulk("");
+    setBulkAssignOpen(true);
+    // load collectors if not already loaded
+    if (!collectors || collectors.length === 0) {
+      setCollectorsLoading(true);
+      try {
+        const list = await listCollectors();
+        setCollectors(list);
+      } catch (e) {
+        setError(e?.response?.data?.message || e.message || 'Failed to load collectors');
+      } finally {
+        setCollectorsLoading(false);
+      }
+    }
+  };
+
+  const confirmBulkAssign = async () => {
+    if (!selectedCollectorIdBulk || selectedBinIds.length === 0) return;
+    setSavingBulkAssign(true);
+    try {
+      // Assign each selected bin sequentially to preserve order and error handling
+      const results = [];
+      for (const id of selectedBinIds) {
+        try {
+          const updated = await assignBin(id, selectedCollectorIdBulk);
+          results.push(updated);
+        } catch (e) {
+          // collect errors but continue with other assignments
+          console.error('assignBin error', id, e);
+        }
+      }
+      // Remove successfully assigned bins from the local list
+      const assignedIds = results.map((r) => r._id || r.id).filter(Boolean);
+      if (assignedIds.length) {
+        setBins((prev) => prev.filter((b) => !assignedIds.includes(b._id || b.id)));
+        try {
+          window.dispatchEvent(new CustomEvent('binAssigned', { detail: results }));
+        } catch (e) {
+          // ignore
+        }
+      }
+      setSelectedBinIds([]);
+      setBulkAssignOpen(false);
+    } finally {
+      setSavingBulkAssign(false);
+    }
+  };
+
   // assignCollectorForLocation removed — unused helper
 
   useEffect(() => {
@@ -173,6 +230,25 @@ export default function Collection() {
       mounted = false;
     };
   }, []);
+
+  // Auto-select up to `quantity` bins for the given `locationFilter` when
+  // both values are present. This implements the behavior: when a location
+  // is selected and a quantity is chosen, the UI should select that number
+  // of rows (if available) for bulk actions. We intentionally only set
+  // selection for the filtered location to avoid modifying other selections.
+  useEffect(() => {
+    // Require a non-empty, non-whitespace location filter and a quantity
+    if (!locationFilter || !locationFilter.toString().trim() || !quantity) return;
+    const q = Number(quantity);
+    if (!q || q <= 0) return;
+    // find bins that match the location filter (case-insensitive)
+    const matches = (bins || []).filter((b) => {
+      const loc = (b.location && (b.location.description || b.location)) || "";
+      return loc.toString().toLowerCase().includes(locationFilter.toString().toLowerCase());
+    });
+    const ids = matches.slice(0, q).map((b) => b._id || b.id || `${b.code || b.location || ''}`);
+    setSelectedBinIds(ids);
+  }, [locationFilter, quantity, bins]);
 
   return (
     <>
@@ -266,6 +342,7 @@ export default function Collection() {
                 <Table>
                   <THead>
                     <tr>
+                      <TH className="w-12">{/* selection */}</TH>
                       <TH>Location</TH>
                       <TH>Fill Level</TH>
                       <TH>Garbage Type</TH>
@@ -347,8 +424,23 @@ export default function Collection() {
               </TableContainer>
             </div>
 
-            <div className="mt-6 flex justify-center">
-              <Button variant="success">View All →</Button>
+            <div className="mt-6 flex items-center justify-center gap-4">
+              {canAssign && (
+                <div>
+                  <Button
+                    variant="primary"
+                    // only enable when the user has provided a non-empty location
+                    // and there are selected bins
+                    disabled={!locationFilter || !locationFilter.toString().trim() || selectedBinIds.length === 0}
+                    onClick={() => openBulkAssignModal()}
+                  >
+                    Assign selected ({selectedBinIds.length})
+                  </Button>
+                </div>
+              )}
+              <div>
+                <Button variant="success">View All →</Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -433,6 +525,73 @@ export default function Collection() {
                         value={id}
                         checked={isSel}
                         onChange={() => setSelectedCollectorId(id)}
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{name}</span>
+                        <span className="text-xs text-gray-500">{u.email}</span>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </Modal>
+      )}
+      {/* Bulk Assign Modal (authority only) */}
+      {canAssign && (
+        <Modal
+          isOpen={bulkAssignOpen}
+          onClose={() => setBulkAssignOpen(false)}
+          title={`Assign Collector — ${selectedBinIds.length} selected`}
+          footer={
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => setBulkAssignOpen(false)}
+                disabled={savingBulkAssign}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={confirmBulkAssign}
+                disabled={!selectedCollectorIdBulk || savingBulkAssign || selectedBinIds.length === 0}
+              >
+                {savingBulkAssign ? 'Assigning…' : `Assign ${selectedBinIds.length}`}
+              </Button>
+            </div>
+          }
+        >
+          {collectorsLoading ? (
+            <div className="text-sm text-gray-600">Loading collectors…</div>
+          ) : (
+            <div className="space-y-3">
+              <div className="text-sm text-gray-600">
+                Select a collector to assign to the selected bins.
+              </div>
+              <div className="max-h-64 overflow-auto border rounded-md divide-y">
+                {collectors.length === 0 && (
+                  <div className="p-3 text-sm text-gray-500">
+                    No collectors found. Create a user with the collector role
+                    first.
+                  </div>
+                )}
+                {collectors.map((u) => {
+                  const id = u._id || u.id;
+                  const name = `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email;
+                  const isSel = selectedCollectorIdBulk === id;
+                  return (
+                    <label
+                      key={id}
+                      className={`flex items-center gap-3 p-3 cursor-pointer ${isSel ? 'bg-blue-50' : ''}`}
+                    >
+                      <input
+                        type="radio"
+                        name="collector-bulk"
+                        value={id}
+                        checked={isSel}
+                        onChange={() => setSelectedCollectorIdBulk(id)}
                       />
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">{name}</span>
