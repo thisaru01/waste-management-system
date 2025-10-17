@@ -3,7 +3,12 @@ import piRepo from '../repositories/pi.repository.js';
 const getAll = async (req, res, next) => {
   try {
     const items = await piRepo.findAll();
-    return res.json(items.reduce((acc, it) => ({ ...acc, [it.key]: it.value }), {}));
+    // Return an object where each key maps to { value, recordedAt }
+    const mapped = items.reduce((acc, it) => ({
+      ...acc,
+      [it.key]: { value: it.value, recordedAt: it.recordedAt },
+    }), {});
+    return res.json(mapped);
   } catch (err) {
     return next(err);
   }
