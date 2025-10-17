@@ -8,6 +8,27 @@ export const NAV_ITEMS = [
     icon: 'home',
     roles: '*', // visible to all authenticated users
   },
+  // New top-level items requested
+  {
+    label: 'Report',
+    to: '/reports',
+    icon: 'chart',
+    roles: '*',
+  },
+  {
+    label: 'Analytics',
+    to: '/analytics',
+    icon: 'chart',
+    roles: ['analysis', 'authority', 'admin'],
+  },
+  {
+    label: 'Bin Monitoring',
+    to: '/bin-monitoring',
+    icon: 'bin',
+    roles: ['collector', 'authority', 'admin'],
+  },
+
+   
   // Admin section
   {
     label: 'User Management',

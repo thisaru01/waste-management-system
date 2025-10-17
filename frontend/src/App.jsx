@@ -6,6 +6,8 @@ import Login from './pages/Login.jsx';
 import Home from './pages/Home.jsx';
 import Admin from './pages/Admin.jsx';
 import AdminUsers from './pages/AdminUsers.jsx';
+import Analytics from './pages/Analytics.jsx';
+import Report from './pages/Report.jsx';
 import ComingSoon from './pages/ComingSoon.jsx';
 
 function App() {
@@ -17,6 +19,8 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/" element={<Home />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/reports" element={<Report />} />
               <Route element={<RoleGuard roles={["admin"]} />}>
                 <Route path="/admin" element={<Admin />}>
                   <Route index element={<AdminUsers />} />
