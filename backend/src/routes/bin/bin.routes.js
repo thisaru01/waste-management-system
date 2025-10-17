@@ -8,6 +8,8 @@ import {
   clearAssignment,
   getBinByCode,
   markAsCollected,
+  startCollectionSession,
+  checkCollectionSession,
 } from "../../controllers/bin/bin.controller.js";
 import { authenticate, authorize } from "../../middleware/auth.middleware.js";
 
@@ -46,6 +48,20 @@ router.patch(
   authenticate,
   authorize("collector"),
   markAsCollected
+);
+// Collectors can start a collection session
+router.post(
+  "/:id/start-session",
+  authenticate,
+  authorize("collector"),
+  startCollectionSession
+);
+// Collectors can check session status
+router.get(
+  "/:id/check-session",
+  authenticate,
+  authorize("collector"),
+  checkCollectionSession
 );
 
 export default router;

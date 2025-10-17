@@ -42,6 +42,7 @@ const BinSchema = new Schema(
         "needs-collection",
         "assigned",
         "collected",
+        "in-collection",
         "unauthorized-collection",
         "overflow",
       ],
@@ -50,6 +51,9 @@ const BinSchema = new Schema(
     },
     lastReadingAt: { type: Date },
     notes: { type: String, default: "" },
+    // Collection session tracking
+    sessionStartedAt: { type: Date, default: null },
+    sessionInitialFillLevel: { type: Number, default: null },
   },
   { timestamps: true }
 );

@@ -72,6 +72,26 @@ export async function markBinAsCollected(id) {
   return data;
 }
 
+/**
+ * Start a collection session for a bin
+ * @param {string} id Bin ID
+ * @returns {Promise<Object>} Session data and updated bin
+ */
+export async function startCollectionSession(id) {
+  const { data } = await API.post(`/api/bins/${id}/start-session`);
+  return data;
+}
+
+/**
+ * Check the status of an active collection session
+ * @param {string} id Bin ID
+ * @returns {Promise<Object>} Session status and bin data
+ */
+export async function checkCollectionSession(id) {
+  const { data } = await API.get(`/api/bins/${id}/check-session`);
+  return data;
+}
+
 export default {
   listBins,
   updateBinSensor,
@@ -81,4 +101,6 @@ export default {
   unassignBin,
   getBinByCode,
   markBinAsCollected,
+  startCollectionSession,
+  checkCollectionSession,
 };

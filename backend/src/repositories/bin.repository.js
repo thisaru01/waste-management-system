@@ -60,6 +60,31 @@ export class BinRepository {
       .populate("owner", "firstName lastName email roles")
       .populate("assignedCollector", "firstName lastName email roles");
   }
+
+  /**
+   * Start a collection session for a bin
+   * @param {string} id Bin ID
+   * @param {Object} sessionData Session start data
+   * @returns {Promise<Object>} Updated bin
+   */
+  async startSession(id, sessionData) {
+    return Bin.findByIdAndUpdate(id, sessionData, { new: true })
+      .populate("owner", "firstName lastName email roles")
+      .populate("assignedCollector", "firstName lastName email roles");
+  }
+
+  /**
+   * End a collection session for a bin
+   * @param {string} id Bin ID
+   * @returns {Promise<Object>} Updated bin
+   */
+  async endSession(id) {
+    const update = {
+      sessionStartedAt: null,
+      sessionInitialFillLevel: null,
+    };
+    return Bin.findByIdAndUpdate(id, update, { new: true });
+  }
 }
 
 export default new BinRepository();
