@@ -61,4 +61,13 @@ export const listMyHistory = async (req, res) => {
   return res.json(items);
 };
 
-export default { finishTodaySchedule, listMyHistory };
+/**
+ * GET /api/history
+ * List all collection history (authority only)
+ */
+export const listAllHistory = async (_req, res) => {
+  const items = await historyRepo.listAll();
+  return res.json(items);
+};
+
+export default { finishTodaySchedule, listMyHistory, listAllHistory };
