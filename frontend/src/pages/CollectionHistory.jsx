@@ -26,12 +26,12 @@ function StatusPill({ status }) {
 export default function CollectionHistory() {
   const { hasRole } = useAuth();
   const [filters, setFilters] = useState({
-    type: "",
     location: "",
     start: "",
     end: "",
-    fill: 50,
+    fill: 0,
   });
+  const [selectedCollector, setSelectedCollector] = useState(""); // authority only
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -72,6 +72,7 @@ export default function CollectionHistory() {
               h.collector?.lastName || ""
             }`.trim()
           : undefined;
+      const collectorId = h.collector?._id || h.collector?.id || undefined;
       for (const b of h.bins || []) {
         rows.push({
           finishedAt: finished,
@@ -83,48 +84,122 @@ export default function CollectionHistory() {
               : "-",
           status: b.status === "collected" ? "Collected" : b.status,
           collector: collectorName,
+          collectorId,
           location: b.locationDescription || "-",
+          fillValue:
+            typeof b.fillLevelPercent === "number" ? b.fillLevelPercent : null,
         });
       }
     }
     return rows;
   }, [history]);
 
+  // Unique collector options for authority filter
+  const collectorOptions = useMemo(() => {
+    if (!hasRole("authority")) return [];
+    const map = new Map();
+    for (const h of history) {
+      const id = h.collector?._id || h.collector?.id;
+      const name =
+        h.collector?.firstName || h.collector?.lastName
+          ? `${h.collector?.firstName || ""} ${
+              h.collector?.lastName || ""
+            }`.trim()
+          : undefined;
+      if (id && name && !map.has(id)) map.set(id, name);
+    }
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [history, hasRole]);
+
+  // Apply client-side filters
+  const filteredRecords = useMemo(() => {
+    let rows = flatRecords;
+
+    // Authority: filter by collector
+    if (hasRole("authority") && selectedCollector) {
+      rows = rows.filter((r) => r.collectorId === selectedCollector);
+    }
+
+    // Location contains (case-insensitive)
+    if (filters.location.trim()) {
+      const q = filters.location.trim().toLowerCase();
+      rows = rows.filter((r) => (r.location || "").toLowerCase().includes(q));
+    }
+
+    // Date range
+    if (filters.start) {
+      const startDate = new Date(filters.start);
+      rows = rows.filter((r) =>
+        r.finishedAt ? new Date(r.finishedAt) >= startDate : true
+      );
+    }
+    if (filters.end) {
+      const endDate = new Date(filters.end);
+      endDate.setHours(23, 59, 59, 999);
+      rows = rows.filter((r) =>
+        r.finishedAt ? new Date(r.finishedAt) <= endDate : true
+      );
+    }
+
+    // Minimum fill percentage (let null pass through)
+    const minFill = Number(filters.fill) || 0;
+    rows = rows.filter((r) => r.fillValue === null || r.fillValue >= minFill);
+
+    return rows;
+  }, [flatRecords, filters, selectedCollector, hasRole]);
+
   return (
     <div className="max-w-6xl mx-auto">
       <PageHeader title="Collection List" subtitle="" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <Select
-          value={filters.type}
-          onChange={(e) => setFilters((s) => ({ ...s, type: e.target.value }))}
-          className="border-green-50"
-        >
-          <option value="">Select Waste Type</option>
-          <option>Plastic</option>
-          <option>Food</option>
-          <option>All</option>
-        </Select>
         <Input
-          placeholder="Location : Rajagiriya"
+          label="Location"
+          placeholder="Location contains..."
           value={filters.location}
           onChange={(e) =>
             setFilters((s) => ({ ...s, location: e.target.value }))
           }
         />
+        {hasRole("authority") && (
+          <Select
+            label="Collector"
+            value={selectedCollector}
+            onChange={(e) => setSelectedCollector(e.target.value)}
+          >
+            <option value="">All collectors</option>
+            {collectorOptions.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mb-6">
-        <Input
-          type="date"
-          value={filters.start}
-          onChange={(e) => setFilters((s) => ({ ...s, start: e.target.value }))}
-        />
-        <Input
-          type="date"
-          value={filters.end}
-          onChange={(e) => setFilters((s) => ({ ...s, end: e.target.value }))}
-        />
+        <div className="md:col-span-2">
+          <label className="block text-sm text-gray-700 mb-1">Date range</label>
+          <div className="flex items-center gap-2">
+            <Input
+              type="date"
+              value={filters.start}
+              onChange={(e) =>
+                setFilters((s) => ({ ...s, start: e.target.value }))
+              }
+            />
+            <span className="text-gray-500">to</span>
+            <Input
+              type="date"
+              value={filters.end}
+              onChange={(e) =>
+                setFilters((s) => ({ ...s, end: e.target.value }))
+              }
+            />
+          </div>
+        </div>
         <div className="md:col-span-1 col-span-2">
           <label className="text-sm text-gray-700">Fill Level</label>
           <input
@@ -139,7 +214,14 @@ export default function CollectionHistory() {
           />
         </div>
         <div className="flex items-center">
-          <Button variant="success">Filter Bins</Button>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              setFilters({ location: "", start: "", end: "", fill: 0 })
+            }
+          >
+            Clear Filters
+          </Button>
         </div>
       </div>
 
@@ -162,7 +244,7 @@ export default function CollectionHistory() {
               </tr>
             </THead>
             <TBody>
-              {flatRecords.map((r, i) => (
+              {filteredRecords.map((r, i) => (
                 <tr key={i} className="border-t">
                   <TD className="py-4">
                     {r.finishedAt
