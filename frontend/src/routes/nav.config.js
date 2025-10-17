@@ -56,7 +56,7 @@ export const NAV_ITEMS = [
     label: 'Settings',
     to: '/settings',
     icon: 'settings',
-    roles: '*',
+    roles: ['bin-owner'],
   },
 ];
 
