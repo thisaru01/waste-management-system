@@ -57,8 +57,44 @@ export default function AdminSensorSim() {
     setLoading(true);
     setError('');
     try {
-      await updateBinSensor(id, payload);
+      const updated = await updateBinSensor(id, payload);
       setSuccess('Sensor values updated');
+      // Notify other UI parts that a bin was updated (status change, etc.)
+      try {
+        window.dispatchEvent(new CustomEvent('binUpdated', { detail: updated }));
+      } catch (e) {
+        // ignore in non-browser/test envs
+      }
+
+      // If the status moved to a terminal collected state, persist a
+      // lightweight history record and emit a binCollected event so the
+      // CollectionHistory page shows the entry even if PendingCollection
+      // wasn't open to perform the persistence.
+      try {
+        const st = (updated.status ?? '').toString().toLowerCase();
+        if (st === 'collected' || st === 'collector') {
+          const record = {
+            date: new Date().toLocaleDateString(),
+            id: updated.code || updated._id || updated.id || '—',
+            location: (updated.location && (updated.location.description || updated.location)) || '—',
+            type: updated.type || '—',
+            fill: (updated.fillLevelPercent ?? updated.fillNumeric ?? updated.fill ?? updated.fillLevel ?? '–') + ' %',
+            status: 'Collected',
+          };
+          const key = 'collectionHistoryRecords';
+          const raw = localStorage.getItem(key);
+          const list = raw ? JSON.parse(raw) : [];
+          list.unshift(record);
+          localStorage.setItem(key, JSON.stringify(list));
+          try {
+            window.dispatchEvent(new CustomEvent('binCollected', { detail: updated }));
+          } catch (e) {
+            // ignore
+          }
+        }
+      } catch (e) {
+        // ignore storage errors
+      }
       await load();
     } catch (e) {
       setError(e?.response?.data?.message || 'Failed to update bin');
