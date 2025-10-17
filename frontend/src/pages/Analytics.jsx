@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import PageHeader from '../components/ui/PageHeader.jsx';
+import PieChart from '../components/ui/PieChart.jsx';
 import { Card, CardHeader, CardContent } from '../components/ui/Card.jsx';
 
 function Metric({ title, value, subtitle }) {
@@ -27,6 +28,12 @@ export default function Analytics() {
       { id: 'BIN-017', fill: '95%' },
       { id: 'BIN-221', fill: '92%' },
     ],
+    wasteTypes: [
+      { label: 'Organic', value: 60, color: '#16a34a' },
+      { label: 'Recyclable', value: 25, color: '#2563eb' },
+      { label: 'Electronic', value: 8, color: '#f59e0b' },
+      { label: 'Other', value: 7, color: '#6b7280' },
+    ],
   }), []);
 
   return (
@@ -45,6 +52,14 @@ export default function Analytics() {
               <Metric title="Waste Volume" value={data.todayVolume} subtitle="Collected today" />
               <Metric title="Daily Pickups" value={data.dailyPickups} subtitle="Completed vs scheduled" />
               <Metric title="Overfull Alerts" value={data.overfullAlerts} subtitle="Active alerts" />
+              <div className="sm:col-span-1">
+                <Card className="p-0">
+                  <CardHeader title="Today Waste Types" subtitle="Breakdown by type" />
+                  <CardContent>
+                    <PieChart data={data.wasteTypes} />
+                  </CardContent>
+                </Card>
+              </div>
             </CardContent>
           </Card>
         </div>
