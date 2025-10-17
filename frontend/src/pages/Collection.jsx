@@ -134,16 +134,13 @@ export default function Collection() {
         assignForBin._id || assignForBin.id,
         selectedCollectorId
       );
-      // Remove the assigned bin from the flagged list so it no longer
-      // appears on the Collection dashboard. The backend marks the bin
-      // with status 'assigned' when a collector is assigned; we remove
-      // it locally to keep the UI responsive without refetching.
+      // Remove the assigned bin from the flagged list 
       setBins((prev) => prev.filter((b) => (b._id || b.id) !== (updated._id || updated.id)));
-      // Notify other parts of the UI (Pending view) that a bin was assigned
+      
       try {
         window.dispatchEvent(new CustomEvent('binAssigned', { detail: updated }));
       } catch (e) {
-        // ignore in non-browser or test environments
+        
       }
       setAssignOpen(false);
     } catch (e) {
@@ -156,9 +153,6 @@ export default function Collection() {
   };
 
   // bulk assign removed per user request
-
-
-  // assignCollectorForLocation removed — unused helper
 
   useEffect(() => {
     let mounted = true;
@@ -182,22 +176,17 @@ export default function Collection() {
     };
   }, []);
 
-  // Compute the displayed (filtered) bins once for reuse in rendering and
-  // for bulk-assign. Behavior:
-  // - If a locationFilter is provided, filter by location.
-  // - If quantity is a number and a locationFilter is present, limit the
-  //   result to the first `quantity` items (client-side limit).
-  // - If no locationFilter is provided, show the full bins list (quantity
-  //   does not apply per product requirement).
+  
+  // bulk-assign
+  
   const displayedBins = (locationFilter || "").toString().trim()
     ? (() => {
           const filtered = bins.filter((b) => {
             const loc = (b.location && (b.location.description || b.location)) || "";
             return loc.toString().toLowerCase().includes(locationFilter.toString().toLowerCase());
           }).slice();
-          // Prioritize overflow bins within the same location. For bins that
-          // share the same location string, move ones with status 'overflow'
-          // to the top of that location's rows. Other ordering is preserved.
+
+          // Prioritize overflow bins 
           filtered.sort((a, b) => {
             const locA = (a.location && (a.location.description || a.location) || "").toString().toLowerCase();
             const locB = (b.location && (b.location.description || b.location) || "").toString().toLowerCase();
@@ -260,9 +249,6 @@ export default function Collection() {
     }
   };
 
-  // Note: quantity should only apply when a locationFilter is provided.
-  // If no locationFilter is set, we display the full bins list regardless
-  // of the quantity selection — this matches the user's requested behavior.
 
   return (
     <>
@@ -325,10 +311,7 @@ export default function Collection() {
               >
                 Refresh
                 </Button>
-                {/* Location filter placed immediately after the Refresh button to match
-                    the existing location search style used elsewhere in the app. This
-                    only filters the displayed rows; counts/averages above remain
-                    based on the full flagged list as requested. */}
+                
                 <div className="w-72">
                   <Input
                     placeholder="Filter by location"
@@ -409,7 +392,7 @@ export default function Collection() {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="text-sm"
+                                      className="text-sm border border-gray-300"
                                       onClick={() => openAssignModal(b)}
                                       aria-label={`Assign collector to bin ${
                                         b.code ?? b._id ?? ""
@@ -588,5 +571,3 @@ export default function Collection() {
   );
 }
 
-// Inline below the component export to keep file scope
-/* Modal UI to assign a bin to a collector */

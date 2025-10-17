@@ -57,9 +57,9 @@ export default function Home() {
               ))}
             </div>
           )}
-          <div className="text-sm text-gray-700">Signed in as <span className="font-medium">{user.email}</span></div>
-          <div className="text-sm text-gray-700">Roles: {user.roles.map((r) => r.displayName).join(', ')}</div>
-          <div className="mt-3 text-sm text-gray-600">Use the nav bar above to access admin tools.</div>
+          {/* <div className="text-sm text-gray-700">Signed in as <span className="font-medium">{user.email}</span></div>
+          <div className="text-sm text-gray-700">Roles: {user.roles.map((r) => r.displayName).join(', ')}</div> */}
+          <div className="mt-3 text-sm text-gray-600">Overflow bins</div>
           {user.roles.some((r) => r.name === 'admin') && (
             <div className="mt-3">
               <Link to="/admin" className="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700">Go to Admin</Link>
