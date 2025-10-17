@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import PageHeader from "../components/ui/PageHeader.jsx";
 import Button from "../components/ui/Button.jsx";
+import Input from "../components/ui/Input.jsx";
 import { Card, CardHeader, CardContent } from "../components/ui/Card.jsx";
 import {
   TableContainer,
@@ -79,6 +80,7 @@ export default function Collection() {
   const [bins, setBins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignForBin, setAssignForBin] = useState(null);
   const [collectors, setCollectors] = useState([]);
@@ -204,7 +206,8 @@ export default function Collection() {
             {/* Overflow notification intentionally removed from Collection view; alert appears on the dashboard. */}
 
             <div className="mt-3">
-              <Button
+              <div className="flex items-center gap-3">
+                <Button
                 variant="secondary"
                 onClick={async () => {
                   setError("");
@@ -224,7 +227,20 @@ export default function Collection() {
                 }}
               >
                 Refresh
-              </Button>
+                </Button>
+                {/* Location filter placed immediately after the Refresh button to match
+                    the existing location search style used elsewhere in the app. This
+                    only filters the displayed rows; counts/averages above remain
+                    based on the full flagged list as requested. */}
+                <div className="w-72">
+                  <Input
+                    placeholder="Filter by location"
+                    value={locationFilter}
+                    onChange={(e) => setLocationFilter(e.target.value)}
+                    aria-label="Filter bins by location"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="mt-6">
@@ -240,7 +256,17 @@ export default function Collection() {
                   </THead>
                   <TBody>
                     {(() => {
-                      return bins.map((b, idx) => {
+                      // Apply a client-side filter for the location field only.
+                      // This keeps counts and average calculations unchanged
+                      // as requested (they reflect the full flagged set).
+                      const displayed = (locationFilter || "").toString().trim()
+                        ? bins.filter((b) => {
+                            const loc = (b.location && (b.location.description || b.location)) || "";
+                            return loc.toString().toLowerCase().includes(locationFilter.toString().toLowerCase());
+                          })
+                        : bins;
+
+                      return displayed.map((b, idx) => {
                         return (
                           <tr
                             key={
