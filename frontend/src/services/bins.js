@@ -25,7 +25,7 @@ export async function listFlaggedBins(threshold = 85) {
  * @returns {Promise<Array>} Array of bin documents
  */
 export async function listAssignedBinsForCollector() {
-  const { data } = await API.get("/api/bins/assigned");
+  const { data } = await API.get("/api/assignments/my-bins");
   return data;
 }
 
@@ -42,13 +42,13 @@ export async function updateBinSensor(id, payload) {
 
 /** Assign a bin to a collector user */
 export async function assignBin(id, collectorId) {
-  const { data } = await API.patch(`/api/bins/${id}/assign`, { collectorId });
+  const { data } = await API.patch(`/api/assignments/bins/${id}/assign`, { collectorId });
   return data;
 }
 
 /** Clear collector assignment for a bin */
 export async function unassignBin(id) {
-  const { data } = await API.patch(`/api/bins/${id}/unassign`);
+  const { data } = await API.patch(`/api/assignments/bins/${id}/unassign`);
   return data;
 }
 
@@ -58,7 +58,7 @@ export async function unassignBin(id) {
  * @returns {Promise<Object>} Bin document
  */
 export async function getBinByCode(code) {
-  const { data } = await API.get(`/api/bins/code/${encodeURIComponent(code)}`);
+  const { data } = await API.get(`/api/collections/code/${encodeURIComponent(code)}`);
   return data;
 }
 
@@ -68,7 +68,7 @@ export async function getBinByCode(code) {
  * @returns {Promise<Object>} Updated bin
  */
 export async function markBinAsCollected(id) {
-  const { data } = await API.patch(`/api/bins/${id}/collect`);
+  const { data } = await API.patch(`/api/collections/${id}/collect`);
   return data;
 }
 
@@ -78,7 +78,7 @@ export async function markBinAsCollected(id) {
  * @returns {Promise<Object>} Session data and updated bin
  */
 export async function startCollectionSession(id) {
-  const { data } = await API.post(`/api/bins/${id}/start-session`);
+  const { data } = await API.post(`/api/collections/${id}/start-session`);
   return data;
 }
 
@@ -88,7 +88,7 @@ export async function startCollectionSession(id) {
  * @returns {Promise<Object>} Session status and bin data
  */
 export async function checkCollectionSession(id) {
-  const { data } = await API.get(`/api/bins/${id}/check-session`);
+  const { data } = await API.get(`/api/collections/${id}/check-session`);
   return data;
 }
 
