@@ -7,6 +7,7 @@ import { transformAndSortBins } from '../utils/binHelpers';
 export default function Home() {
   const { user, hasRole } = useAuth();
   const [overflowAlert, setOverflowAlert] = useState(false);
+  const [overflowLocations, setOverflowLocations] = useState([]);
   useEffect(() => {
     // Only fetch and show the overflow alert for users with the authority role.
     if (!hasRole || !hasRole('authority')) {
@@ -23,6 +24,15 @@ export default function Home() {
         const transformed = transformAndSortBins(data, 85);
         const hasOverflow = transformed.some((b) => (b.fillNumeric ?? 0) >= 100 || (b.status && String(b.status).toLowerCase() === 'overflow'));
         setOverflowAlert(hasOverflow);
+        // build per-location overflow counts for the dashboard message
+        const map = new Map();
+        for (const b of transformed) {
+          const isOverflow = (b.fillNumeric ?? 0) >= 100 || (b.status && String(b.status).toLowerCase() === 'overflow');
+          if (!isOverflow) continue;
+          const loc = (b.location && (b.location.description || b.location)) || 'Unknown';
+          map.set(loc, (map.get(loc) || 0) + 1);
+        }
+        setOverflowLocations(Array.from(map.entries()));
       } catch (e) {
         // don't surface errors on home; this is a best-effort alert
         console.debug('failed to fetch flagged bins for dashboard alert', e?.message || e);
@@ -35,9 +45,16 @@ export default function Home() {
       <h1 className="text-2xl font-semibold text-gray-900">Welcome</h1>
       {user ? (
         <div className="rounded-lg border border-gray-200 bg-white p-4">
-          {overflowAlert && (
-            <div className="mb-4 rounded-md bg-red-50 border border-red-200 p-3 text-red-800">
-              <strong>Overflow alert:</strong> One or more bins have reached 100% and require immediate attention.
+          {/* Per-location overflow messages (authority only) */}
+          {overflowLocations.length > 0 && (
+            <div className="mb-4 mt-2 flex flex-wrap gap-3">
+              {overflowLocations.map(([loc, count]) => (
+                <div key={loc} className="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm">
+                  <strong>Overflow</strong>
+                  <span className="font-medium">{loc}</span>
+                  <span className="text-xs text-red-600">({count} bin{count > 1 ? 's' : ''})</span>
+                </div>
+              ))}
             </div>
           )}
           <div className="text-sm text-gray-700">Signed in as <span className="font-medium">{user.email}</span></div>

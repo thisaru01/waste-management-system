@@ -202,8 +202,10 @@ export default function Collection() {
             const locA = (a.location && (a.location.description || a.location) || "").toString().toLowerCase();
             const locB = (b.location && (b.location.description || b.location) || "").toString().toLowerCase();
             if (locA === locB) {
-              const aOverflow = (a.status || "").toString().toLowerCase() === "overflow";
-              const bOverflow = (b.status || "").toString().toLowerCase() === "overflow";
+              const aFill = Number(a.fillNumeric ?? a.fill ?? 0);
+              const bFill = Number(b.fillNumeric ?? b.fill ?? 0);
+              const aOverflow = aFill >= 100 || (a.status || "").toString().toLowerCase() === "overflow";
+              const bOverflow = bFill >= 100 || (b.status || "").toString().toLowerCase() === "overflow";
               if (aOverflow && !bOverflow) return -1;
               if (bOverflow && !aOverflow) return 1;
             }
@@ -358,6 +360,8 @@ export default function Collection() {
                 </div>
               </div>
             </div>
+
+            {/* Overflow badges removed from Collections page per user request */}
 
             <div className="mt-6">
               <TableContainer>
