@@ -204,8 +204,12 @@ export default function CollectorSchedule() {
 
               {/* Map view */}
               <div className="mt-6">
-                <h4 className="text-base font-semibold text-gray-900 mb-2">Map View</h4>
-                <p className="text-sm text-gray-600 mb-3">Shows bins with available coordinates.</p>
+                <h4 className="text-base font-semibold text-gray-900 mb-2">
+                  Map View
+                </h4>
+                <p className="text-sm text-gray-600 mb-3">
+                  Shows bins with available coordinates.
+                </p>
                 <MapView bins={bins} />
               </div>
 

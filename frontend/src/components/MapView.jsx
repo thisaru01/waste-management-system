@@ -32,7 +32,8 @@ export default function MapView({ bins = [], className = "" }) {
         zoom: 2,
       });
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(mapRef.current);
     }
     const map = mapRef.current;
@@ -62,10 +63,14 @@ export default function MapView({ bins = [], className = "" }) {
 
   return (
     <div className={className}>
-      <div ref={mapElRef} className="w-full h-64 rounded-lg overflow-hidden border border-gray-200" />
+      <div
+        ref={mapElRef}
+        className="w-full h-64 rounded-lg overflow-hidden border border-gray-200"
+      />
       {markers.length === 0 && (
         <div className="text-sm text-gray-600 mt-2">
-          No coordinates available for these bins. Add lat/lng to bin.location to see markers.
+          No coordinates available for these bins. Add lat/lng to bin.location
+          to see markers.
         </div>
       )}
     </div>
