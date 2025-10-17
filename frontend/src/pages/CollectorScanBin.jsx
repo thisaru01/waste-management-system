@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "../components/ui/Card.jsx";
 import Button from "../components/ui/Button.jsx";
 import Input from "../components/ui/Input.jsx";
-import { getBinByCode, startCollectionSession } from "../services/bins.js";
+import {
+  getBinByCode,
+  startCollectionSession,
+  checkCollectionSession,
+} from "../services/bins.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
   useCollectionSession,
@@ -40,6 +44,8 @@ const SCAN_STATE = {
 export default function CollectorScanBin() {
   const { user } = useAuth();
 
+  const ACTIVE_SESSION_STORAGE_KEY = "activeBinSession";
+
   // Scanning state management
   const [scanState, setScanState] = useState(SCAN_STATE.IDLE);
   const [binCode, setBinCode] = useState("");
@@ -60,6 +66,37 @@ export default function CollectorScanBin() {
     scannedBin?._id,
     scanState === SCAN_STATE.SESSION_ACTIVE
   );
+
+  // Restore active session on mount (if user navigated away and returned)
+  useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        const raw = localStorage.getItem(ACTIVE_SESSION_STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!parsed?.binId) return;
+
+        // Verify with backend whether session is still active
+        try {
+          const res = await checkCollectionSession(parsed.binId);
+          if (res?.hasActiveSession) {
+            // Fetch the full bin by code is not needed; we can synthesize minimal bin
+            setScannedBin({ _id: parsed.binId, code: res?.bin?.code });
+            setScanState(SCAN_STATE.SESSION_ACTIVE);
+          } else {
+            localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
+          }
+        } catch (err) {
+          // If backend says no session or 400, clear stored session
+          localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
+        }
+      } catch (_) {
+        // ignore
+      }
+    };
+    restoreSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Simulates QR code scanning with random bin code generation
@@ -124,6 +161,13 @@ export default function CollectorScanBin() {
 
       // Automatically start collection session after successful scan
       await startCollectionSession(bin._id);
+      // Persist active session so it survives navigation
+      try {
+        localStorage.setItem(
+          ACTIVE_SESSION_STORAGE_KEY,
+          JSON.stringify({ binId: bin._id, startedAt: Date.now() })
+        );
+      } catch (_) {}
       setScanState(SCAN_STATE.SESSION_ACTIVE);
     } catch (e) {
       if (e?.response?.status === 403) {
@@ -184,6 +228,9 @@ export default function CollectorScanBin() {
     resetError();
     setScanState(SCAN_STATE.IDLE);
     resetSession();
+    try {
+      localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
+    } catch (_) {}
   };
 
   /**
@@ -306,11 +353,11 @@ export default function CollectorScanBin() {
               <span className="text-gray-600">Current Fill Level:</span>
               <span
                 className={`font-semibold ${
-                  sessionData.levelReduced ? "text-green-600" : "text-gray-900"
+                  sessionData.thresholdMet ? "text-green-600" : "text-gray-900"
                 }`}
               >
                 {sessionData.currentFillLevel}%
-                {sessionData.levelReduced && " ↓"}
+                {sessionData.thresholdMet && " ✓"}
               </span>
             </div>
           </div>
@@ -320,7 +367,7 @@ export default function CollectorScanBin() {
           <p className="text-xs text-blue-800 text-center">
             <strong>Monitoring:</strong> Collecting waste from this bin. The
             system will automatically mark it as collected when the bin level
-            reduces.
+            reaches 5% or below.
           </p>
         </div>
       </div>
@@ -490,7 +537,7 @@ export default function CollectorScanBin() {
                 <strong>How it works:</strong> Scan or enter a bin ID. If the
                 bin is assigned to you, a 15-minute collection session will
                 start automatically. The system will automatically detect when
-                waste is collected.
+                the bin reaches 5% or below and mark it as collected.
               </p>
             </div>
           )}
