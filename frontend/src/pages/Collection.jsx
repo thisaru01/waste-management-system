@@ -337,13 +337,6 @@ export default function Collection() {
                     aria-label="Filter bins by location"
                   />
                 </div>
-                {canAssign && locationFilter.toString().trim() && (
-                  <div>
-                    <Button variant="primary" onClick={openBulkAssignModal} aria-label="Assign filtered bins">
-                      Assign filtered ({displayedBins.length})
-                    </Button>
-                  </div>
-                )}
                 <div className="w-24">
                   <Select
                     value={quantity}
@@ -358,6 +351,13 @@ export default function Collection() {
                     <option value={3}>3</option>
                   </Select>
                 </div>
+                {canAssign && locationFilter.toString().trim() && (
+                  <div>
+                    <Button variant="primary" onClick={openBulkAssignModal} aria-label="Assign filtered bins">
+                      Assign filtered ({displayedBins.length})
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 
