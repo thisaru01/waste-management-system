@@ -85,10 +85,6 @@ export default function Collection() {
   // quantity left empty string to allow a placeholder option to be shown
   // the actual value when selected will be converted to Number
   const [quantity, setQuantity] = useState("");
-  const [selectedBinIds, setSelectedBinIds] = useState([]);
-  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
-  const [selectedCollectorIdBulk, setSelectedCollectorIdBulk] = useState("");
-  const [savingBulkAssign, setSavingBulkAssign] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignForBin, setAssignForBin] = useState(null);
   const [collectors, setCollectors] = useState([]);
@@ -154,58 +150,6 @@ export default function Collection() {
     }
   };
 
-  /**
-   * Open the bulk assign modal and ensure collectors are loaded.
-   */
-  const openBulkAssignModal = async () => {
-    setError("");
-    setSelectedCollectorIdBulk("");
-    setBulkAssignOpen(true);
-    // load collectors if not already loaded
-    if (!collectors || collectors.length === 0) {
-      setCollectorsLoading(true);
-      try {
-        const list = await listCollectors();
-        setCollectors(list);
-      } catch (e) {
-        setError(e?.response?.data?.message || e.message || 'Failed to load collectors');
-      } finally {
-        setCollectorsLoading(false);
-      }
-    }
-  };
-
-  const confirmBulkAssign = async () => {
-    if (!selectedCollectorIdBulk || selectedBinIds.length === 0) return;
-    setSavingBulkAssign(true);
-    try {
-      // Assign each selected bin sequentially to preserve order and error handling
-      const results = [];
-      for (const id of selectedBinIds) {
-        try {
-          const updated = await assignBin(id, selectedCollectorIdBulk);
-          results.push(updated);
-        } catch (e) {
-          // collect errors but continue with other assignments
-          console.error('assignBin error', id, e);
-        }
-      }
-      // Remove successfully assigned bins from the local list
-      const assignedIds = results.map((r) => r._id || r.id).filter(Boolean);
-      if (assignedIds.length) {
-        setBins((prev) => prev.filter((b) => !assignedIds.includes(b._id || b.id)));
-        try {
-          window.dispatchEvent(new CustomEvent('binAssigned', { detail: results }));
-        } catch (e) {
-          // ignore
-        }
-      }
-      setSelectedBinIds([]);
-      setBulkAssignOpen(false);
-    } finally {
-      setSavingBulkAssign(false);
-    }
-  };
 
   // assignCollectorForLocation removed — unused helper
 
@@ -231,24 +175,9 @@ export default function Collection() {
     };
   }, []);
 
-  // Auto-select up to `quantity` bins for the given `locationFilter` when
-  // both values are present. This implements the behavior: when a location
-  // is selected and a quantity is chosen, the UI should select that number
-  // of rows (if available) for bulk actions. We intentionally only set
-  // selection for the filtered location to avoid modifying other selections.
-  useEffect(() => {
-    // Require a non-empty, non-whitespace location filter and a quantity
-    if (!locationFilter || !locationFilter.toString().trim() || !quantity) return;
-    const q = Number(quantity);
-    if (!q || q <= 0) return;
-    // find bins that match the location filter (case-insensitive)
-    const matches = (bins || []).filter((b) => {
-      const loc = (b.location && (b.location.description || b.location)) || "";
-      return loc.toString().toLowerCase().includes(locationFilter.toString().toLowerCase());
-    });
-    const ids = matches.slice(0, q).map((b) => b._id || b.id || `${b.code || b.location || ''}`);
-    setSelectedBinIds(ids);
-  }, [locationFilter, quantity, bins]);
+  // Note: quantity should only apply when a locationFilter is provided.
+  // If no locationFilter is set, we display the full bins list regardless
+  // of the quantity selection — this matches the user's requested behavior.
 
   return (
     <>
@@ -388,7 +317,7 @@ export default function Collection() {
                                 <div>
                                   <StatusBadge status={b.status} />
                                 </div>
-                                {canAssign && (
+                                {canAssign && selectedBinIds.length === 0 && (
                                   <div>
                                     <Button
                                       variant="ghost"
@@ -425,19 +354,16 @@ export default function Collection() {
             </div>
 
             <div className="mt-6 flex items-center justify-center gap-4">
-              {canAssign && (
+              {canAssign && selectedBinIds.length > 0 ? (
                 <div>
                   <Button
                     variant="primary"
-                    // only enable when the user has provided a non-empty location
-                    // and there are selected bins
-                    disabled={!locationFilter || !locationFilter.toString().trim() || selectedBinIds.length === 0}
                     onClick={() => openBulkAssignModal()}
                   >
                     Assign selected ({selectedBinIds.length})
                   </Button>
                 </div>
-              )}
+              ) : null}
               <div>
                 <Button variant="success">View All →</Button>
               </div>
