@@ -181,14 +181,14 @@ export default function SchedulePickup() {
                     label="Item Type"
                   >
                     <option value="">Select Item Type</option>
-                    <option value="Couch">🛋️ Couch</option>
-                    <option value="Refrigerator">❄️ Refrigerator</option>
-                    <option value="Mattress">🛏️ Mattress</option>
-                    <option value="TV">📺 TV</option>
-                    <option value="Washing Machine">🧺 Washing Machine</option>
-                    <option value="Desk">🪑 Desk</option>
-                    <option value="Chair">💺 Chair</option>
-                    <option value="Other">📦 Other</option>
+                    <option value="Couch"> Couch</option>
+                    <option value="Refrigerator"> Refrigerator</option>
+                    <option value="Mattress"> Mattress</option>
+                    <option value="TV"> TV</option>
+                    <option value="Washing Machine"> Washing Machine</option>
+                    <option value="Desk"> Desk</option>
+                    <option value="Chair"> Chair</option>
+                    <option value="Other"> Other</option>
                   </Select>
 
                   <Select
@@ -199,10 +199,10 @@ export default function SchedulePickup() {
                     label="Item Size/Weight"
                   >
                     <option value="">Select Item Weight</option>
-                    <option value="Small">Small (Easy to carry)</option>
-                    <option value="Medium">Medium (1-2 people)</option>
-                    <option value="Large">Large (2-3 people)</option>
-                    <option value="Extra Large">Extra Large (Special equipment)</option>
+                    <option value="Small">Small</option>
+                    <option value="Medium">Medium </option>
+                    <option value="Large">Large </option>
+                    <option value="Extra Large">Extra Large </option>
                   </Select>
                 </div>
 

@@ -157,7 +157,7 @@ export default function ResidentDashboard() {
                 <div className="mt-4">
                   <p className="text-sm font-medium text-gray-600">Outstanding Balance</p>
                   <p className="text-3xl font-bold text-gray-900 mt-1">
-                    ${summary.outstandingBalance.toFixed(2)}
+                    Rs {summary.outstandingBalance.toFixed(2)}
                   </p>
                 </div>
                 <Link to="/payments" className="mt-4 text-sm text-purple-600 hover:text-purple-700 font-medium inline-flex items-center gap-1">
@@ -360,7 +360,7 @@ export default function ResidentDashboard() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-gray-900">${payment.amount.toFixed(2)}</p>
+                        <p className="text-lg font-bold text-gray-900">Rs {payment.amount.toFixed(2)}</p>
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${
                           payment.status === 'paid' ? 'bg-green-100 text-green-800' :
                           payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :

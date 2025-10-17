@@ -170,7 +170,7 @@ export default function Payments() {
   }
 
   function formatCurrency(amount) {
-    return `$${parseFloat(amount || 0).toFixed(2)}`;
+    return `Rs ${parseFloat(amount || 0).toFixed(2)}`;
   }
 
   function getStatusBadgeClass(status) {

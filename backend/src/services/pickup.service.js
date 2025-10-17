@@ -34,7 +34,9 @@ export class PickupService {
     });
 
     // Get pickup fee from environment or use default
-    const pickupFee = parseFloat(process.env.PICKUP_FEE) || 25.00;
+    const pickupFee = parseFloat(process.env.PICKUP_FEE) || 250.00;
+    console.log('🔍 Pickup Fee from env:', process.env.PICKUP_FEE);
+    console.log('💰 Using pickup fee:', pickupFee);
 
     // Create payment for the pickup
     const payment = await paymentService.createPickupPayment({

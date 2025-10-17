@@ -120,7 +120,7 @@ export default function PaymentsPage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm opacity-90">Outstanding Balance</p>
-            <h2 className="text-4xl font-bold mt-2">${outstandingBalance.toFixed(2)}</h2>
+            <h2 className="text-4xl font-bold mt-2">Rs {outstandingBalance.toFixed(2)}</h2>
           </div>
           <div className="text-5xl opacity-20">💳</div>
         </div>
@@ -201,7 +201,7 @@ export default function PaymentsPage() {
                     )}
                     {payment.status === 'refunded' && (
                       <span className="text-xs text-gray-500">
-                        Refunded ${payment.refundAmount?.toFixed(2)}
+                        Refunded Rs{payment.refundAmount?.toFixed(2)}
                       </span>
                     )}
                   </td>
