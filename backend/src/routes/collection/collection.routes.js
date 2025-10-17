@@ -2,9 +2,11 @@ import { Router } from "express";
 import {
   getBinByCode,
   markAsCollected,
+} from "../../controllers/collection/collection.controller.js";
+import {
   startCollectionSession,
   checkCollectionSession,
-} from "../../controllers/collection/collection.controller.js";
+} from "../../controllers/session/session.controller.js";
 import { authenticate, authorize } from "../../middleware/auth.middleware.js";
 
 const router = Router();
