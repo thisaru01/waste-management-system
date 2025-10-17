@@ -83,6 +83,13 @@ export default function CollectorScanBin() {
             // Fetch the full bin by code is not needed; we can synthesize minimal bin
             setScannedBin({ _id: parsed.binId, code: res?.bin?.code });
             setScanState(SCAN_STATE.SESSION_ACTIVE);
+            // Keep stored data fresh
+            const startedAt = res?.sessionData?.startedAt || parsed.startedAt;
+            const duration = res?.sessionData?.sessionDurationMinutes || parsed.sessionDurationMinutes || 15;
+            localStorage.setItem(
+              ACTIVE_SESSION_STORAGE_KEY,
+              JSON.stringify({ binId: parsed.binId, startedAt, sessionDurationMinutes: duration })
+            );
           } else {
             localStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
           }
@@ -160,12 +167,14 @@ export default function CollectorScanBin() {
       setAssignmentError(null);
 
       // Automatically start collection session after successful scan
-      await startCollectionSession(bin._id);
-      // Persist active session so it survives navigation
+      const startResp = await startCollectionSession(bin._id);
+      // Persist active session so it survives navigation (use server start time and duration)
       try {
+        const startedAt = startResp?.sessionStartedAt || startResp?.sessionData?.startedAt || Date.now();
+        const duration = startResp?.sessionDurationMinutes || startResp?.sessionData?.sessionDurationMinutes || 15;
         localStorage.setItem(
           ACTIVE_SESSION_STORAGE_KEY,
-          JSON.stringify({ binId: bin._id, startedAt: Date.now() })
+          JSON.stringify({ binId: bin._id, startedAt, sessionDurationMinutes: duration })
         );
       } catch (_) {}
       setScanState(SCAN_STATE.SESSION_ACTIVE);

@@ -1,5 +1,11 @@
 import binRepo from "../../repositories/bin.repository.js";
 
+function getSessionDurationMinutes() {
+  const raw = process.env.COLLECTION_SESSION_MINUTES;
+  const n = raw !== undefined ? Number(raw) : 15;
+  return Number.isFinite(n) && n > 0 ? n : 15;
+}
+
 /**
  * GET /api/collections/code/:code
  * Get a bin by its unique code (for QR scanning)
@@ -124,11 +130,11 @@ export const startCollectionSession = async (req, res) => {
   if (!updated)
     return res.status(404).json({ message: "Failed to start session" });
 
+  const duration = getSessionDurationMinutes();
   return res.json({
     ...updated.toObject(),
-    sessionDurationMinutes: 15,
-    message:
-      "Collection session started. You have 15 minutes to collect waste.",
+    sessionDurationMinutes: duration,
+    message: `Collection session started. You have ${duration} minute(s) to collect waste.`,
   });
 };
 
@@ -166,7 +172,8 @@ export const checkCollectionSession = async (req, res) => {
   const sessionStartTime = new Date(bin.sessionStartedAt);
   const now = new Date();
   const elapsedMinutes = (now - sessionStartTime) / (1000 * 60);
-  const sessionExpired = elapsedMinutes > 15;
+  const duration = getSessionDurationMinutes();
+  const sessionExpired = elapsedMinutes > duration;
 
   // Check if fill level has been reduced
   const initialLevel = bin.sessionInitialFillLevel || 0;
@@ -175,6 +182,7 @@ export const checkCollectionSession = async (req, res) => {
 
   let sessionStatus = "active";
   let message = "Session is active. Monitoring bin level...";
+  let updatedStatus = bin.status;
 
   if (thresholdMet) {
     // Bin level meets threshold - mark as collected and end session
@@ -185,12 +193,15 @@ export const checkCollectionSession = async (req, res) => {
 
     sessionStatus = "completed";
     message = "Waste collected successfully! Bin level is 5% or below.";
+    updatedStatus = "collected";
   } else if (sessionExpired) {
     // Session expired without collection
+    await binRepo.updateSensor(id, { status: "assigned" });
     await binRepo.endSession(id);
     sessionStatus = "expired";
     message =
       "Session expired. Bin level was not reduced. Please scan again to restart.";
+    updatedStatus = "assigned";
   }
 
   return res.json({
@@ -200,7 +211,8 @@ export const checkCollectionSession = async (req, res) => {
     sessionData: {
       startedAt: bin.sessionStartedAt,
       elapsedMinutes: Math.floor(elapsedMinutes),
-      remainingMinutes: Math.max(0, 15 - Math.floor(elapsedMinutes)),
+      remainingMinutes: Math.max(0, Math.ceil(duration - elapsedMinutes)),
+      sessionDurationMinutes: duration,
       initialFillLevel: initialLevel,
       currentFillLevel: currentLevel,
       thresholdMet,
@@ -209,7 +221,7 @@ export const checkCollectionSession = async (req, res) => {
     bin: {
       id: bin._id,
       code: bin.code,
-      status: bin.status,
+      status: updatedStatus,
       fillLevelPercent: bin.fillLevelPercent,
     },
   });
