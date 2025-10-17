@@ -8,23 +8,11 @@ import Admin from './pages/Admin.jsx';
 import AdminUsers from './pages/AdminUsers.jsx';
 import AdminSensorSim from './pages/AdminSensorSim.jsx';
 import ComingSoon from './pages/ComingSoon.jsx';
+import CollectorSchedule from './pages/CollectorSchedule.jsx';
+import CollectorScanBin from './pages/CollectorScanBin.jsx';
 import Collection from './pages/Collection.jsx';
 import CollectionHistory from './pages/CollectionHistory.jsx';
 import PendingCollection from './pages/PendingCollection.jsx';
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext.jsx";
-import ProtectedRoute, { RoleGuard } from "./routes/ProtectedRoute.jsx";
-import AppLayout from "./layouts/AppLayout.jsx";
-import Login from "./pages/Login.jsx";
-import Home from "./pages/Home.jsx";
-import Admin from "./pages/Admin.jsx";
-import AdminUsers from "./pages/AdminUsers.jsx";
-import AdminSensorSim from "./pages/AdminSensorSim.jsx";
-import ComingSoon from "./pages/ComingSoon.jsx";
-import CollectorSchedule from "./pages/CollectorSchedule.jsx";
-import CollectorScanBin from "./pages/CollectorScanBin.jsx";
-import Collection from "./pages/Collection.jsx";
-import CollectionHistory from "./pages/CollectionHistory.jsx";
 
 function App() {
   return (
