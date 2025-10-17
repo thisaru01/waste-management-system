@@ -23,17 +23,17 @@ export const NAV_ITEMS = [
   },
   // Example placeholders for future areas; adjust role targeting as needed
   {
-    label: 'Collections',
-    to: '/collections',
-    icon: 'collection',
-    roles: ['authority', 'collector'],
+    label: "Collections",
+    to: "/collections",
+    icon: "collection",
+    roles: ["authority"],
   },
   // Authority-only quick access to pending collections
   {
-    label: 'Pending collection',
-    to: '/collections/pending',
-    icon: 'collection',
-    roles: ['authority'],
+    label: "Pending collection",
+    to: "/collections/pending",
+    icon: "collection",
+    roles: ["authority"],
   },
   {
     label: 'Collection History',

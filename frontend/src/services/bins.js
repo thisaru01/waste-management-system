@@ -21,6 +21,15 @@ export async function listFlaggedBins(threshold = 85) {
 }
 
 /**
+ * List bins flagged as unauthorized collection (authority only)
+ * @returns {Promise<Array>} Array of bin documents
+ */
+export async function listUnauthorizedBins() {
+  const { data } = await API.get("/api/bins/unauthorized");
+  return data;
+}
+
+/**
  * List bins assigned to the authenticated collector
  * @returns {Promise<Array>} Array of bin documents
  */
@@ -42,7 +51,9 @@ export async function updateBinSensor(id, payload) {
 
 /** Assign a bin to a collector user */
 export async function assignBin(id, collectorId) {
-  const { data } = await API.patch(`/api/assignments/bins/${id}/assign`, { collectorId });
+  const { data } = await API.patch(`/api/assignments/bins/${id}/assign`, {
+    collectorId,
+  });
   return data;
 }
 
@@ -58,7 +69,9 @@ export async function unassignBin(id) {
  * @returns {Promise<Object>} Bin document
  */
 export async function getBinByCode(code) {
-  const { data } = await API.get(`/api/collections/code/${encodeURIComponent(code)}`);
+  const { data } = await API.get(
+    `/api/collections/code/${encodeURIComponent(code)}`
+  );
   return data;
 }
 
@@ -96,6 +109,7 @@ export default {
   listBins,
   updateBinSensor,
   listFlaggedBins,
+  listUnauthorizedBins,
   listAssignedBinsForCollector,
   assignBin,
   unassignBin,
