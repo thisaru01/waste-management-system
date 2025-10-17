@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest --coverage",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.mjs",
     "fix:indexes": "node src/scripts/fixIndexes.js"
   },
   "keywords": [],
@@ -23,6 +23,8 @@
     "bcryptjs": "^2.4.3"
   },
   "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0",
     "nodemon": "^3.1.10"
   }
 }
