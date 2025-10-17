@@ -14,6 +14,20 @@ import { finishTodaySchedule } from "../services/history.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import MapView from "../components/MapView.jsx";
 
+function StatusBadge({ status }) {
+  const s = String(status || "").toLowerCase();
+  let cls = "bg-gray-100 text-gray-700";
+  if (s === "collected") cls = "bg-green-100 text-green-700";
+  else if (s === "assigned") cls = "bg-blue-100 text-blue-700";
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium capitalize ${cls}`}
+    >
+      {status}
+    </span>
+  );
+}
+
 /**
  * BinCard Component
  * Mobile-friendly card view for a single bin
@@ -26,9 +40,7 @@ function BinCard({ bin }) {
           <h3 className="font-semibold text-gray-900">{bin.code}</h3>
           <p className="text-xs text-gray-500 capitalize">{bin.type}</p>
         </div>
-        <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium capitalize">
-          {bin.status}
-        </span>
+        <StatusBadge status={bin.status} />
       </div>
 
       <div className="space-y-2">
@@ -186,9 +198,7 @@ export default function CollectorSchedule() {
                           <TD>{b.fillLevelPercent ?? "-"}</TD>
                           <TD>{b.weightKg ?? "-"}</TD>
                           <TD>
-                            <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium capitalize">
-                              {b.status}
-                            </span>
+                            <StatusBadge status={b.status} />
                           </TD>
                           <TD className="text-xs">
                             {b.assignedAt
