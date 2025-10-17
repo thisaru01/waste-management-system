@@ -75,15 +75,12 @@ export default function Home() {
           {overflowLocations.length > 0 && (
             <div className="mb-4 mt-2 space-y-2">
               {overflowLocations.map(([loc, count]) => (
-                <div
-                  key={loc}
-                  className="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm"
-                >
-                  <strong>Overflow</strong>
-                  <span className="font-medium">{loc}</span>
-                  <span className="text-xs text-red-600">
-                    ({count} bin{count > 1 ? "s" : ""})
-                  </span>
+                <div key={loc} className="w-full">
+                  <div className="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm">
+                    <strong>Overflow</strong>
+                    <span className="font-medium">{loc}</span>
+                    <span className="text-xs text-red-600">({count} bin{count > 1 ? "s" : ""})</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -92,28 +89,17 @@ export default function Home() {
           {unauthAlerts.length > 0 && (
             <div className="mb-4 mt-2 flex flex-wrap gap-3">
               {unauthAlerts.map(([loc, count]) => (
-                <div
-                  key={loc}
-                  className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-3 py-2 rounded-md text-sm"
-                >
-                  <strong>Unauthorized</strong>
-                  <span className="font-medium">{loc}</span>
-                  <span className="text-xs text-amber-600">
-                    ({count} bin{count > 1 ? "s" : ""})
-                  </span>
+                <div key={loc} className="w-full">
+                  <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-3 py-2 rounded-md text-sm">
+                    <strong>Unauthorized</strong>
+                    <span className="font-medium">{loc}</span>
+                    <span className="text-xs text-amber-600">({count} bin{count > 1 ? "s" : ""})</span>
+                  </div>
                 </div>
               ))}
             </div>
           )}
-          <div className="text-sm text-gray-700">
-            Signed in as <span className="font-medium">{user.email}</span>
-          </div>
-          <div className="text-sm text-gray-700">
-            Roles: {user.roles.map((r) => r.displayName).join(", ")}
-          </div>
-          <div className="mt-3 text-sm text-gray-600">
-            Use the nav bar above to access admin tools.
-          </div>
+          
           {user.roles.some((r) => r.name === "admin") && (
             <div className="mt-3">
               <Link
