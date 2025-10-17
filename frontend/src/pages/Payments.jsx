@@ -1,18 +1,25 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader';
 import { Card } from '../components/ui/Card';
 import Input from '../components/ui/Input';
-import Button from '../components/ui/Button';
 import Select from '../components/ui/Select';
-import { getMyPayments, getOutstandingBalance, processPayment } from '../services/payments';
+import Button from '../components/ui/Button';
+import { getMyPayments, getOutstandingBalance } from '../services/payments';
+import StripePayment from '../components/StripePayment';
 
 export default function Payments() {
+  const location = useLocation(); // Detect route changes
   const [payments, setPayments] = useState([]);
   const [filteredPayments, setFilteredPayments] = useState([]);
   const [outstandingBalance, setOutstandingBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [processing, setProcessing] = useState(null);
+  
+  // Stripe payment modal state
+  const [showStripeModal, setShowStripeModal] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState(null);
 
   // Filters
   const [filters, setFilters] = useState({
@@ -32,9 +39,37 @@ export default function Payments() {
       }
     }, 30000);
     
-    // Cleanup interval on unmount
-    return () => clearInterval(intervalId);
+    // Refresh when window/tab becomes visible (user switches back to this tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('Page became visible, refreshing payments...');
+        fetchPaymentsData();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Refresh when window gains focus (user clicks back into browser)
+    const handleFocus = () => {
+      console.log('Window gained focus, refreshing payments...');
+      fetchPaymentsData();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    
+    // Cleanup
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
+
+  // Refresh when navigating to this page (e.g., from Schedule Pickup page)
+  useEffect(() => {
+    console.log('Route changed to Payments page, refreshing data...');
+    fetchPaymentsData();
+  }, [location.pathname]);
 
   useEffect(() => {
     applyFilters();
@@ -102,27 +137,27 @@ export default function Payments() {
     });
   }
 
-  async function handlePayNow(paymentId, amount) {
-    if (!confirm(`Confirm payment of $${amount}?`)) {
-      return;
-    }
+  async function handlePayNow(payment) {
+    setSelectedPayment(payment);
+    setShowStripeModal(true);
+  }
 
-    try {
-      setProcessing(paymentId);
-      setError(null);
+  async function handlePaymentSuccess() {
+    setShowStripeModal(false);
+    setSelectedPayment(null);
+    
+    // Refresh payment data to show updated status
+    await fetchPaymentsData();
+  }
 
-      await processPayment(paymentId, 'online');
-      
-      // Refresh payment data
-      await fetchPaymentsData();
-      
-      alert('Payment processed successfully!');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to process payment');
-      console.error('Error processing payment:', err);
-    } finally {
-      setProcessing(null);
-    }
+  function handlePaymentCancel() {
+    setShowStripeModal(false);
+    setSelectedPayment(null);
+  }
+
+  function handlePaymentError(error) {
+    console.error('Payment error:', error);
+    setError(error.message || 'Payment failed. Please try again.');
   }
 
   function formatDate(dateString) {
@@ -167,13 +202,6 @@ export default function Payments() {
           title="My Payments"
           subtitle="View and manage your waste management service payments"
         />
-        <Button 
-          onClick={() => fetchPaymentsData()} 
-          disabled={loading}
-          variant="outline"
-        >
-          {loading ? '🔄 Refreshing...' : '🔄 Refresh'}
-        </Button>
       </div>
 
       {/* Outstanding Balance Card */}
@@ -354,10 +382,10 @@ export default function Payments() {
                           <Button
                             variant="primary"
                             size="sm"
-                            onClick={() => handlePayNow(payment._id, payment.amount)}
+                            onClick={() => handlePayNow(payment)}
                             disabled={processing === payment._id}
                           >
-                            {processing === payment._id ? 'Processing...' : 'Pay Now'}
+                            Pay with Card
                           </Button>
                         ) : payment.status === 'refunded' ? (
                           <span className="text-xs text-blue-600">
@@ -379,6 +407,52 @@ export default function Payments() {
           )}
         </div>
       </Card>
+      
+      {/* Stripe Payment Modal */}
+      {showStripeModal && selectedPayment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-900">
+                Complete Payment
+              </h3>
+              <button
+                onClick={handlePaymentCancel}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-gray-600">Invoice:</span>
+                <span className="text-sm font-medium">{selectedPayment.invoiceNumber}</span>
+              </div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-gray-600">Due Date:</span>
+                <span className="text-sm font-medium">{formatDate(selectedPayment.dueDate)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm font-semibold text-gray-900">Amount:</span>
+                <span className="text-lg font-bold text-blue-600">
+                  {formatCurrency(selectedPayment.amount)}
+                </span>
+              </div>
+            </div>
+
+            <StripePayment
+              paymentId={selectedPayment._id}
+              amount={selectedPayment.amount}
+              onSuccess={handlePaymentSuccess}
+              onCancel={handlePaymentCancel}
+              onError={handlePaymentError}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

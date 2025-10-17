@@ -6,9 +6,8 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
-import { getStripeConfig, createStripePaymentIntent } from '../services/payments';
-import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
+import { getStripeConfig, createStripePaymentIntent, confirmStripePayment } from '../services/payments';
+import Button from './ui/Button';
 
 /**
  * Stripe Payment Form Component
@@ -24,6 +23,7 @@ function CheckoutForm({ paymentId, amount, onSuccess, onError }) {
     e.preventDefault();
 
     if (!stripe || !elements) {
+      console.warn('Stripe or Elements not ready');
       return;
     }
 
@@ -43,10 +43,20 @@ function CheckoutForm({ paymentId, amount, onSuccess, onError }) {
         setMessage(error.message);
         if (onError) onError(error);
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        setMessage('Payment successful!');
-        if (onSuccess) onSuccess(paymentIntent);
+        // Payment succeeded in Stripe, now confirm with backend
+        try {
+          await confirmStripePayment(paymentId, paymentIntent.id);
+          setMessage('Payment successful!');
+          if (onSuccess) onSuccess(paymentIntent);
+        } catch (backendError) {
+          console.error('Backend confirmation error:', backendError);
+          setMessage('Payment processed but confirmation failed. Please refresh the page.');
+          // Still call onSuccess since payment went through
+          if (onSuccess) onSuccess(paymentIntent);
+        }
       }
     } catch (err) {
+      console.error('Payment error:', err);
       setMessage('An unexpected error occurred.');
       if (onError) onError(err);
     } finally {
@@ -79,7 +89,7 @@ function CheckoutForm({ paymentId, amount, onSuccess, onError }) {
  * Stripe Payment Component
  * Main component that loads Stripe and manages payment flow
  */
-export default function StripePayment({ paymentId, amount, onSuccess, onCancel }) {
+export default function StripePayment({ paymentId, amount, onSuccess, onCancel, onError }) {
   const [stripePromise, setStripePromise] = useState(null);
   const [clientSecret, setClientSecret] = useState('');
   const [loading, setLoading] = useState(true);
@@ -132,29 +142,30 @@ export default function StripePayment({ paymentId, amount, onSuccess, onCancel }
   const options = {
     clientSecret,
     appearance,
+    paymentMethodOrder: ['card'], // Only show card payment option
   };
 
   if (loading) {
     return (
-      <Card className="p-6">
+      <div className="p-6">
         <div className="flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <span className="ml-3">Loading payment...</span>
         </div>
-      </Card>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card className="p-6">
+      <div className="p-6">
         <div className="text-red-600 mb-4">{error}</div>
         {onCancel && (
           <Button onClick={onCancel} variant="outline">
             Go Back
           </Button>
         )}
-      </Card>
+      </div>
     );
   }
 
@@ -163,18 +174,16 @@ export default function StripePayment({ paymentId, amount, onSuccess, onCancel }
   }
 
   return (
-    <Card className="p-6">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold">Complete Payment</h3>
-        <p className="text-gray-600">Amount: ${amount.toFixed(2)}</p>
-      </div>
-
+    <div>
       <Elements stripe={stripePromise} options={options}>
         <CheckoutForm
           paymentId={paymentId}
           amount={amount}
           onSuccess={onSuccess}
-          onError={(error) => setError(error.message)}
+          onError={(error) => {
+            setError(error.message);
+            if (onError) onError(error);
+          }}
         />
       </Elements>
 
@@ -185,6 +194,6 @@ export default function StripePayment({ paymentId, amount, onSuccess, onCancel }
           </Button>
         </div>
       )}
-    </Card>
+    </div>
   );
 }

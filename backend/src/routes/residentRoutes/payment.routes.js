@@ -6,6 +6,7 @@ import {
   processPayment,
   createPaymentIntent,
   getPaymentByPickup,
+  confirmStripePayment,
 } from '../../controllers/residentController/payment.controller.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
 
@@ -18,5 +19,6 @@ router.get('/history', authenticate, getPaymentHistory);
 router.get('/pickup/:pickupId', authenticate, getPaymentByPickup);
 router.post('/:id/pay', authenticate, processPayment);
 router.post('/:id/stripe/payment-intent', authenticate, createPaymentIntent);
+router.post('/:id/stripe/confirm', authenticate, confirmStripePayment);
 
 export default router;

@@ -355,6 +355,42 @@ export class PaymentService {
   }
 
   /**
+   * Verify and confirm Stripe payment after frontend confirms success
+   * @param {string} paymentId - Payment ID
+   * @param {string} paymentIntentId - Stripe Payment Intent ID
+   * @returns {Promise<Object>} Updated payment
+   */
+  async verifyAndConfirmStripePayment(paymentId, paymentIntentId) {
+    // Get payment
+    const payment = await this.getPaymentById(paymentId);
+
+    // Check if already paid
+    if (payment.status === 'paid') {
+      return payment;
+    }
+
+    // Retrieve payment intent from Stripe to verify it succeeded
+    const paymentDetails = await stripeService.retrievePaymentIntent(paymentIntentId);
+
+    if (paymentDetails.status !== 'succeeded') {
+      throw new BusinessRuleError(`Payment has not succeeded. Current status: ${paymentDetails.status}`);
+    }
+
+    // Update payment status
+    const updatedPayment = await paymentRepo.update(payment._id, {
+      status: 'paid',
+      paidDate: new Date(),
+      paymentMethod: 'stripe',
+      stripePaymentIntentId: paymentIntentId,
+      transactionId: paymentDetails.charges || paymentIntentId,
+    });
+
+    console.log(`✅ Payment confirmed: ${payment.invoiceNumber} - $${payment.amount}`);
+
+    return updatedPayment;
+  }
+
+  /**
    * Process refund for pickup cancellation
    * @param {string} pickupId - Pickup ID
    * @param {string} reason - Cancellation reason

@@ -90,6 +90,16 @@ export async function getStripeConfig() {
   return data;
 }
 
+/**
+ * Confirm payment success after Stripe payment intent succeeds
+ */
+export async function confirmStripePayment(paymentId, paymentIntentId) {
+  const { data } = await API.post(`/api/payments/${paymentId}/stripe/confirm`, {
+    paymentIntentId,
+  });
+  return data;
+}
+
 export default {
   getMyPayments,
   getOutstandingBalance,
@@ -102,4 +112,5 @@ export default {
   getPaymentByPickup,
   createStripePaymentIntent,
   getStripeConfig,
+  confirmStripePayment,
 };

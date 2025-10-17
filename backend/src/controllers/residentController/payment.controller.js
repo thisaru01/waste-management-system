@@ -145,3 +145,48 @@ export const getPaymentByPickup = async (req, res) => {
     });
   }
 };
+
+/**
+ * Confirm Stripe payment after successful payment intent
+ * @route POST /api/payments/:id/stripe/confirm
+ */
+export const confirmStripePayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentIntentId } = req.body;
+    const residentId = req.user.sub;
+
+    if (!paymentIntentId) {
+      return res.status(400).json({
+        message: 'Payment intent ID is required',
+        error: 'BadRequest',
+      });
+    }
+
+    // Get payment and verify ownership
+    const payment = await paymentService.getPaymentById(id);
+    if (payment.resident._id.toString() !== residentId.toString()) {
+      return res.status(403).json({
+        message: 'Access denied',
+        error: 'Forbidden',
+      });
+    }
+
+    // Retrieve payment intent from Stripe to verify it succeeded
+    const paymentIntentDetails = await paymentService.verifyAndConfirmStripePayment(
+      id,
+      paymentIntentId
+    );
+
+    return res.json({
+      message: 'Payment confirmed successfully',
+      payment: paymentIntentDetails,
+    });
+  } catch (err) {
+    const statusCode = err.statusCode || 500;
+    return res.status(statusCode).json({
+      message: err.message,
+      error: err.name,
+    });
+  }
+};

@@ -46,9 +46,7 @@ export class StripeService {
         currency,
         description,
         metadata,
-        automatic_payment_methods: {
-          enabled: true,
-        },
+        payment_method_types: ['card'], // Only allow card payments
       });
 
       return {
