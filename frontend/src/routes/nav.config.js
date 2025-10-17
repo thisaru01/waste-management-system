@@ -38,13 +38,13 @@ export const NAV_ITEMS = [
     label: 'Payments',
     to: '/payments',
     icon: 'payments',
-    roles: ['resident', 'bin-owner', '*'],
+    roles: ['bin-owner'],
   },
   {
     label: 'Schedule Pickup',
     to: '/schedule-pickup',
     icon: 'calendar',
-    roles: ['resident', 'bin-owner', '*'],
+    roles: ['bin-owner'],
   },
   {
     label: 'Data Analysis',
