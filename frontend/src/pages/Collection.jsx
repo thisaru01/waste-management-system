@@ -91,6 +91,11 @@ export default function Collection() {
   const [collectorsLoading, setCollectorsLoading] = useState(false);
   const [selectedCollectorId, setSelectedCollectorId] = useState("");
   const [savingAssign, setSavingAssign] = useState(false);
+  // Bulk-assign (filtered) state — activated when a location filter is set
+  // and the authority user chooses to assign all displayed bins.
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
+  const [selectedCollectorIdBulk, setSelectedCollectorIdBulk] = useState("");
+  const [savingBulkAssign, setSavingBulkAssign] = useState(false);
 
   // threshold for flagging bins
   const THRESHOLD = 85;
@@ -150,6 +155,8 @@ export default function Collection() {
     }
   };
 
+  // bulk assign removed per user request
+
 
   // assignCollectorForLocation removed — unused helper
 
@@ -174,6 +181,68 @@ export default function Collection() {
       mounted = false;
     };
   }, []);
+
+  // Compute the displayed (filtered) bins once for reuse in rendering and
+  // for bulk-assign. Behavior:
+  // - If a locationFilter is provided, filter by location.
+  // - If quantity is a number and a locationFilter is present, limit the
+  //   result to the first `quantity` items (client-side limit).
+  // - If no locationFilter is provided, show the full bins list (quantity
+  //   does not apply per product requirement).
+  const displayedBins = (locationFilter || "").toString().trim()
+    ? (() => {
+        const filtered = bins.filter((b) => {
+          const loc = (b.location && (b.location.description || b.location)) || "";
+          return loc.toString().toLowerCase().includes(locationFilter.toString().toLowerCase());
+        });
+        // apply client-side quantity limit only when a location filter exists
+        return typeof quantity === "number" && !Number.isNaN(quantity) && quantity > 0
+          ? filtered.slice(0, quantity)
+          : filtered;
+      })()
+    : bins;
+
+  const openBulkAssignModal = async () => {
+    setError("");
+    setSelectedCollectorIdBulk("");
+    setCollectorsLoading(true);
+    try {
+      const list = await listCollectors();
+      setCollectors(list);
+      setBulkAssignOpen(true);
+    } catch (e) {
+      setError(e?.response?.data?.message || e.message || "Failed to load collectors");
+    } finally {
+      setCollectorsLoading(false);
+    }
+  };
+
+  const confirmBulkAssign = async () => {
+    if (!selectedCollectorIdBulk) return;
+    setSavingBulkAssign(true);
+    try {
+      const results = [];
+      for (const b of displayedBins) {
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          const res = await assignBin(b._id || b.id, selectedCollectorIdBulk);
+          results.push(res);
+        } catch (err) {
+          console.error('assignBin error for', b, err);
+        }
+      }
+      const assignedIds = new Set(results.map((r) => r._id || r.id));
+      setBins((prev) => prev.filter((b) => !assignedIds.has(b._id || b.id)));
+      try {
+        window.dispatchEvent(new CustomEvent('binsBulkAssigned', { detail: { ids: Array.from(assignedIds), collector: selectedCollectorIdBulk } }));
+      } catch (e) {}
+      setBulkAssignOpen(false);
+    } catch (e) {
+      setError(e?.response?.data?.message || e.message || 'Failed to assign selected bins');
+    } finally {
+      setSavingBulkAssign(false);
+    }
+  };
 
   // Note: quantity should only apply when a locationFilter is provided.
   // If no locationFilter is set, we display the full bins list regardless
@@ -249,6 +318,13 @@ export default function Collection() {
                     aria-label="Filter bins by location"
                   />
                 </div>
+                {canAssign && locationFilter.toString().trim() && (
+                  <div>
+                    <Button variant="primary" onClick={openBulkAssignModal} aria-label="Assign filtered bins">
+                      Assign filtered ({displayedBins.length})
+                    </Button>
+                  </div>
+                )}
                 <div className="w-24">
                   <Select
                     value={quantity}
@@ -271,7 +347,7 @@ export default function Collection() {
                 <Table>
                   <THead>
                     <tr>
-                      <TH className="w-12">{/* selection */}</TH>
+                      <TH className="w-12">{/* reserved for icon/spacing */}</TH>
                       <TH>Location</TH>
                       <TH>Fill Level</TH>
                       <TH>Garbage Type</TH>
@@ -279,18 +355,7 @@ export default function Collection() {
                     </tr>
                   </THead>
                   <TBody>
-                    {(() => {
-                      // Apply a client-side filter for the location field only.
-                      // This keeps counts and average calculations unchanged
-                      // as requested (they reflect the full flagged set).
-                      const displayed = (locationFilter || "").toString().trim()
-                        ? bins.filter((b) => {
-                            const loc = (b.location && (b.location.description || b.location)) || "";
-                            return loc.toString().toLowerCase().includes(locationFilter.toString().toLowerCase());
-                          })
-                        : bins;
-
-                      return displayed.map((b, idx) => {
+                    {displayedBins.map((b, idx) => {
                         return (
                           <tr
                             key={
@@ -305,9 +370,10 @@ export default function Collection() {
                             }
                             className="border-t"
                           >
-                            <TD className="py-4">
-                              {b.location?.description ?? b.location ?? "—"}
-                            </TD>
+                              <TD className="py-4">{/* spacer */}</TD>
+                              <TD className="py-4">
+                                {b.location?.description ?? b.location ?? "—"}
+                              </TD>
                             <TD className="py-4">
                               {(b.fillNumeric ?? "–") + " %"}
                             </TD>
@@ -317,33 +383,15 @@ export default function Collection() {
                                 <div>
                                   <StatusBadge status={b.status} />
                                 </div>
-                                {canAssign && selectedBinIds.length === 0 && (
-                                  <div>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-sm"
-                                      onClick={() => openAssignModal(b)}
-                                      aria-label={`Assign collector to bin ${
-                                        b.code ?? b._id ?? ""
-                                      }`}
-                                    >
-                                      Assign
-                                    </Button>
-                                  </div>
-                                )}
+                                {/* per-row Assign intentionally hidden when bulk filtered assign is used */}
                               </div>
                             </TD>
                           </tr>
                         );
-                      });
-                    })()}
+                      })}
                     {!loading && !error && bins.length === 0 && (
                       <tr>
-                        <TD
-                          colSpan={4}
-                          className="py-6 text-center text-gray-500"
-                        >
+                        <TD colSpan={5} className="py-6 text-center text-gray-500">
                           No flagged bins found.
                         </TD>
                       </tr>
@@ -354,16 +402,7 @@ export default function Collection() {
             </div>
 
             <div className="mt-6 flex items-center justify-center gap-4">
-              {canAssign && selectedBinIds.length > 0 ? (
-                <div>
-                  <Button
-                    variant="primary"
-                    onClick={() => openBulkAssignModal()}
-                  >
-                    Assign selected ({selectedBinIds.length})
-                  </Button>
-                </div>
-              ) : null}
+              {/* bulk assign removed per user preference */}
               <div>
                 <Button variant="success">View All →</Button>
               </div>
@@ -464,12 +503,12 @@ export default function Collection() {
           )}
         </Modal>
       )}
-      {/* Bulk Assign Modal (authority only) */}
+      {/* Bulk Assign Modal (assign filtered bins) */}
       {canAssign && (
         <Modal
           isOpen={bulkAssignOpen}
           onClose={() => setBulkAssignOpen(false)}
-          title={`Assign Collector — ${selectedBinIds.length} selected`}
+          title={`Assign Collector — ${displayedBins.length} filtered`}
           footer={
             <div className="flex justify-end gap-2">
               <Button
@@ -482,9 +521,9 @@ export default function Collection() {
               <Button
                 variant="primary"
                 onClick={confirmBulkAssign}
-                disabled={!selectedCollectorIdBulk || savingBulkAssign || selectedBinIds.length === 0}
+                disabled={!selectedCollectorIdBulk || savingBulkAssign || displayedBins.length === 0}
               >
-                {savingBulkAssign ? 'Assigning…' : `Assign ${selectedBinIds.length}`}
+                {savingBulkAssign ? 'Assigning…' : `Assign ${displayedBins.length}`}
               </Button>
             </div>
           }
@@ -494,13 +533,12 @@ export default function Collection() {
           ) : (
             <div className="space-y-3">
               <div className="text-sm text-gray-600">
-                Select a collector to assign to the selected bins.
+                Select a collector to assign to the filtered bins.
               </div>
               <div className="max-h-64 overflow-auto border rounded-md divide-y">
                 {collectors.length === 0 && (
                   <div className="p-3 text-sm text-gray-500">
-                    No collectors found. Create a user with the collector role
-                    first.
+                    No collectors found. Create a user with the collector role first.
                   </div>
                 )}
                 {collectors.map((u) => {
@@ -531,6 +569,7 @@ export default function Collection() {
           )}
         </Modal>
       )}
+      {/* bulk assign removed */}
     </>
   );
 }
