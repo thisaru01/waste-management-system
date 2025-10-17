@@ -47,11 +47,13 @@ export default function Home() {
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           {/* Per-location overflow messages (authority only) */}
           {overflowLocations.length > 0 && (
-            <div className="mb-4 mt-2 flex flex-wrap gap-3">
+            <div className="mb-4 mt-2 space-y-2">
               {overflowLocations.map(([loc, count]) => (
-                <div key={loc} className="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm">
-                  <strong>Overflow</strong>
-                  <span className="font-medium">{loc}</span>
+                <div key={loc} className="max-w-3xl flex items-center justify-between bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm">
+                  <div className="inline-flex items-center gap-2">
+                    <strong>Overflow</strong>
+                    <span className="font-medium">{loc}</span>
+                  </div>
                   <span className="text-xs text-red-600">({count} bin{count > 1 ? 's' : ''})</span>
                 </div>
               ))}
@@ -59,7 +61,7 @@ export default function Home() {
           )}
           {/* <div className="text-sm text-gray-700">Signed in as <span className="font-medium">{user.email}</span></div>
           <div className="text-sm text-gray-700">Roles: {user.roles.map((r) => r.displayName).join(', ')}</div> */}
-          <div className="mt-3 text-sm text-gray-600">Overflow bins</div>
+          {/* <div className="mt-3 text-sm text-gray-600">Overflow bins</div> */}
           {user.roles.some((r) => r.name === 'admin') && (
             <div className="mt-3">
               <Link to="/admin" className="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700">Go to Admin</Link>
