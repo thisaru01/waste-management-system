@@ -191,10 +191,24 @@ export default function Collection() {
   //   does not apply per product requirement).
   const displayedBins = (locationFilter || "").toString().trim()
     ? (() => {
-        const filtered = bins.filter((b) => {
-          const loc = (b.location && (b.location.description || b.location)) || "";
-          return loc.toString().toLowerCase().includes(locationFilter.toString().toLowerCase());
-        });
+          const filtered = bins.filter((b) => {
+            const loc = (b.location && (b.location.description || b.location)) || "";
+            return loc.toString().toLowerCase().includes(locationFilter.toString().toLowerCase());
+          }).slice();
+          // Prioritize overflow bins within the same location. For bins that
+          // share the same location string, move ones with status 'overflow'
+          // to the top of that location's rows. Other ordering is preserved.
+          filtered.sort((a, b) => {
+            const locA = (a.location && (a.location.description || a.location) || "").toString().toLowerCase();
+            const locB = (b.location && (b.location.description || b.location) || "").toString().toLowerCase();
+            if (locA === locB) {
+              const aOverflow = (a.status || "").toString().toLowerCase() === "overflow";
+              const bOverflow = (b.status || "").toString().toLowerCase() === "overflow";
+              if (aOverflow && !bOverflow) return -1;
+              if (bOverflow && !aOverflow) return 1;
+            }
+            return 0;
+          });
         // apply client-side quantity limit only when a location filter exists
         return typeof quantity === "number" && !Number.isNaN(quantity) && quantity > 0
           ? filtered.slice(0, quantity)
