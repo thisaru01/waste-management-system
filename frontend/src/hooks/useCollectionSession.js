@@ -37,6 +37,7 @@ export function useCollectionSession(binId, isActive) {
   const timerIntervalRef = useRef(null);
   const binIdRef = useRef(binId);
   const isActiveRef = useRef(isActive);
+  const sessionDeadlineRef = useRef(null); // ms timestamp when session should end
 
   // Keep refs in sync with props
   useEffect(() => {
@@ -69,6 +70,13 @@ export function useCollectionSession(binId, isActive) {
 
       setSessionData(response.sessionData);
 
+      // Set/refresh deadline from server-provided start time for stable countdown
+      if (response?.sessionData?.startedAt) {
+        const startedMs = new Date(response.sessionData.startedAt).getTime();
+        const deadline = startedMs + 15 * 60 * 1000;
+        sessionDeadlineRef.current = deadline;
+      }
+
       if (response.sessionStatus === "completed") {
         setSessionStatus(SESSION_STATUS.COMPLETED);
         stopMonitoring();
@@ -77,14 +85,6 @@ export function useCollectionSession(binId, isActive) {
         stopMonitoring();
       } else if (response.sessionStatus === "active") {
         setSessionStatus(SESSION_STATUS.ACTIVE);
-
-        // Update remaining time from server
-        if (response.sessionData) {
-          const minutes = response.sessionData.remainingMinutes || 0;
-          const totalSeconds = minutes * 60;
-          setRemainingMinutes(Math.floor(totalSeconds / 60));
-          setRemainingSeconds(totalSeconds % 60);
-        }
       }
 
       setError(null);
@@ -110,6 +110,9 @@ export function useCollectionSession(binId, isActive) {
     if (!binId) return;
 
     setSessionStatus(SESSION_STATUS.ACTIVE);
+    // Optimistically set a 15-minute deadline; will be corrected by first check
+    sessionDeadlineRef.current = Date.now() + 15 * 60 * 1000;
+    // Initialize visible countdown
     setRemainingMinutes(15);
     setRemainingSeconds(0);
     setError(null);
@@ -124,19 +127,14 @@ export function useCollectionSession(binId, isActive) {
 
     // Update countdown timer every second for better UX
     timerIntervalRef.current = setInterval(() => {
-      setRemainingSeconds((prevSeconds) => {
-        if (prevSeconds === 0) {
-          // Need to borrow from minutes
-          setRemainingMinutes((prevMinutes) => {
-            if (prevMinutes > 0) {
-              return prevMinutes - 1;
-            }
-            return 0;
-          });
-          return 59;
-        }
-        return prevSeconds - 1;
-      });
+      const deadline = sessionDeadlineRef.current;
+      if (!deadline) return;
+      const now = Date.now();
+      const totalSecondsLeft = Math.max(0, Math.floor((deadline - now) / 1000));
+      const mins = Math.floor(totalSecondsLeft / 60);
+      const secs = totalSecondsLeft % 60;
+      setRemainingMinutes(mins);
+      setRemainingSeconds(secs);
     }, 1000); // 1 second
   }, [binId, checkSession]);
 
@@ -150,6 +148,7 @@ export function useCollectionSession(binId, isActive) {
     setRemainingMinutes(15);
     setRemainingSeconds(0);
     setError(null);
+    sessionDeadlineRef.current = null;
   }, [stopMonitoring]);
 
   /**
