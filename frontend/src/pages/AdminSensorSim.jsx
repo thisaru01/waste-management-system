@@ -102,7 +102,7 @@ export default function AdminSensorSim() {
       setLoading(false);
     }
   };
-
+//comment
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <Card>
