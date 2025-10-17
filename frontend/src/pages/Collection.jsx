@@ -293,6 +293,9 @@ export default function Collection() {
                   try {
                     const data = await listFlaggedBins(THRESHOLD);
                     setBins(transformAndSortBins(data, THRESHOLD));
+                    // Reset filters so Refresh shows the full bin list as requested
+                    setLocationFilter("");
+                    setQuantity("");
                   } catch (e) {
                     setError(
                       e?.response?.data?.message ||
@@ -383,7 +386,21 @@ export default function Collection() {
                                 <div>
                                   <StatusBadge status={b.status} />
                                 </div>
-                                {/* per-row Assign intentionally hidden when bulk filtered assign is used */}
+                                {canAssign && !(locationFilter || "").toString().trim() && (
+                                  <div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-sm"
+                                      onClick={() => openAssignModal(b)}
+                                      aria-label={`Assign collector to bin ${
+                                        b.code ?? b._id ?? ""
+                                      }`}
+                                    >
+                                      Assign
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
                             </TD>
                           </tr>
