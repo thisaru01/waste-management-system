@@ -1,6 +1,7 @@
 import roleRepo from '../repositories/role.repository.js';
 import userRepo from '../repositories/user.repository.js';
 import User from '../models/user/user.model.js';
+import piRepo from '../repositories/pi.repository.js';
 
 const DEFAULT_ROLES = [
   { name: 'admin', displayName: 'Admin', description: 'System administrator', isSystem: true },
@@ -37,5 +38,18 @@ export async function seedDefaults() {
     });
     // eslint-disable-next-line no-console
     console.log(`Seeded admin user: ${adminEmail}`);
+  }
+
+  // Seed PI metrics (dummy data)
+  try {
+    await piRepo.upsertByKey('totalWasteCollected', { kg: 8500 });
+    await piRepo.upsertByKey('missedCollections', 5);
+    await piRepo.upsertByKey('activeZones', 12);
+    await piRepo.upsertByKey('efficiencyPercent', 85);
+    // eslint-disable-next-line no-console
+    console.log('Seeded PI metrics');
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to seed PI metrics', err.message);
   }
 }

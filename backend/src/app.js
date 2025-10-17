@@ -4,6 +4,7 @@ import morgan from "morgan";
 import authRoutes from "./routes/auth/auth.routes.js";
 import userRoutes from "./routes/adminrouter/user.routes.js";
 import roleRoutes from "./routes/auth/role.routes.js";
+import piRoutes from "./routes/pi.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 
 const app = express();
@@ -22,6 +23,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/roles", roleRoutes);
+app.use("/api/pi", piRoutes);
 
 // Error handler
 app.use(errorHandler);
