@@ -4,8 +4,11 @@ import morgan from "morgan";
 import authRoutes from "./routes/auth/auth.routes.js";
 import userRoutes from "./routes/adminrouter/user.routes.js";
 import roleRoutes from "./routes/auth/role.routes.js";
+import binRoutes from "./routes/bin/bin.routes.js";
+import collectionRoutes from "./routes/collection/collection.routes.js";
+import historyRoutes from "./routes/history/history.routes.js";
+import assignmentRoutes from "./routes/assignment/assignment.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
-import binRoutes from './routes/bin/bin.routes.js';
 
 const app = express();
 
@@ -23,7 +26,10 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/roles", roleRoutes);
-app.use('/api/bins', binRoutes);
+app.use("/api/bins", binRoutes);
+app.use("/api/collections", collectionRoutes);
+app.use("/api/assignments", assignmentRoutes);
+app.use("/api/history", historyRoutes);
 
 // Error handler
 app.use(errorHandler);

@@ -1,12 +1,11 @@
-import binRepo from '../../repositories/bin.repository.js';
-import User from '../../models/user/user.model.js';
+import binRepo from "../../repositories/bin.repository.js";
 
 /**
  * GET /api/bins
  * List bins with minimal details for simulation UI
  */
 export const listBins = async (_req, res) => {
-  const bins = await binRepo.list({}, '-__v');
+  const bins = await binRepo.list({}, "-__v");
   return res.json(bins);
 };
 
@@ -18,7 +17,7 @@ export const listBins = async (_req, res) => {
 export const listFlagged = async (req, res) => {
   const threshold = Number(req.query.threshold ?? 85);
   const filter = { fillLevelPercent: { $gte: threshold } };
-  const bins = await binRepo.list(filter, '-__v');
+  const bins = await binRepo.list(filter, "-__v");
   return res.json(bins);
 };
 
@@ -29,52 +28,87 @@ export const listFlagged = async (req, res) => {
 export const updateBinSensor = async (req, res) => {
   const { id } = req.params;
   const { fillLevelPercent, weightKg, status } = req.body || {};
-  if (typeof fillLevelPercent !== 'number' && typeof weightKg !== 'number' && typeof status !== 'string') {
-    return res.status(400).json({ message: 'Provide at least one of: fillLevelPercent, weightKg, status' });
+  if (
+    typeof fillLevelPercent !== "number" &&
+    typeof weightKg !== "number" &&
+    typeof status !== "string"
+  ) {
+    return res.status(400).json({
+      message: "Provide at least one of: fillLevelPercent, weightKg, status",
+    });
   }
-  let nextStatus = status;
-  if (!nextStatus && typeof fillLevelPercent === 'number') {
-    // treat 100% as overflow
-    if (fillLevelPercent >= 100) nextStatus = 'overflow';
-    else if (fillLevelPercent >= 85) nextStatus = 'needs-collection';
-    else if (fillLevelPercent <= 5) nextStatus = 'collected';
-    else nextStatus = 'normal';
+  // Fetch current bin to enforce transition rules
+  const bin = await binRepo.findById(id);
+  if (!bin) return res.status(404).json({ message: "Bin not found" });
+
+  // Determine candidate new values
+  const newFill =
+    typeof fillLevelPercent === "number"
+      ? Math.max(0, Math.min(100, fillLevelPercent))
+      : bin.fillLevelPercent;
+  let nextStatus = status; // requested status if provided
+
+  // Business rules:
+  // 1) When bin is in 'in-collection', the ONLY allowed next status is 'collected'.
+  // 2) Only change to 'collected' AFTER the bin level reduces to 5% or below.
+  if (bin.status === "in-collection") {
+    // If a status is explicitly requested and it's not 'collected', reject.
+    if (typeof nextStatus === "string" && nextStatus !== "collected") {
+      return res.status(400).json({
+        message:
+          "While in-collection, status can only change to 'collected' and only after fillLevelPercent <= 5%",
+      });
+    }
+
+    // If request wants to set collected, ensure level is <= 5 after this update
+    if (nextStatus === "collected") {
+      if (newFill > 5) {
+        return res.status(400).json({
+          message:
+            "Cannot mark as collected until bin level is 5% or below during the collection session",
+        });
+      }
+    }
+
+    // If status not explicitly requested, auto-mark collected only when level <= 5
+    if (!nextStatus) {
+      if (typeof fillLevelPercent === "number" && newFill <= 5) {
+        nextStatus = "collected";
+      } else {
+        // Keep status as in-collection until threshold is met
+        nextStatus = bin.status;
+      }
+    }
+  } else {
+    // Outside of an active collection session, don't auto-set 'collected'.
+    // Compute status from thresholds unless an explicit non-'collected' status is provided.
+    if (typeof nextStatus === "string") {
+      if (nextStatus === "collected") {
+        return res.status(400).json({
+          message:
+            "Cannot change status to 'collected' outside an active collection session (in-collection)",
+        });
+      }
+      // Allow other manual statuses
+    } else if (typeof fillLevelPercent === "number") {
+      // treat 100% as overflow; >=85 needs-collection; <=5 normal (not collected outside session)
+      if (newFill >= 100) nextStatus = "overflow";
+      else if (newFill >= 85) nextStatus = "needs-collection";
+      else nextStatus = "normal";
+    }
   }
-  const updated = await binRepo.updateSensor(id, { fillLevelPercent, weightKg, status: nextStatus });
-  if (!updated) return res.status(404).json({ message: 'Bin not found' });
+
+  const updated = await binRepo.updateSensor(id, {
+    fillLevelPercent,
+    weightKg,
+    status: nextStatus,
+  });
+  if (!updated) return res.status(404).json({ message: "Bin not found" });
   return res.json(updated);
 };
 
-/**
- * PATCH /api/bins/:id/assign
- * Body: { collectorId }
- * Assign a collector user to a bin.
- */
-export const assignCollector = async (req, res) => {
-  const { id } = req.params;
-  const { collectorId } = req.body || {};
-  if (!collectorId) return res.status(400).json({ message: 'collectorId is required' });
-
-  // Validate user exists and has 'collector' role
-  const user = await User.findById(collectorId).populate('roles');
-  if (!user) return res.status(404).json({ message: 'Collector user not found' });
-  const hasCollectorRole = (user.roles || []).some((r) => (r.name || '').toLowerCase() === 'collector');
-  if (!hasCollectorRole) return res.status(400).json({ message: 'User is not a collector' });
-
-  const updated = await binRepo.assignCollector(id, collectorId);
-  if (!updated) return res.status(404).json({ message: 'Bin not found' });
-  return res.json(updated);
+export default {
+  listBins,
+  updateBinSensor,
+  listFlagged,
 };
-
-/**
- * PATCH /api/bins/:id/unassign
- * Clear collector assignment from a bin.
- */
-export const clearAssignment = async (req, res) => {
-  const { id } = req.params;
-  const updated = await binRepo.clearAssignment(id);
-  if (!updated) return res.status(404).json({ message: 'Bin not found' });
-  return res.json(updated);
-};
-
-export default { listBins, updateBinSensor, listFlagged, assignCollector, clearAssignment };
