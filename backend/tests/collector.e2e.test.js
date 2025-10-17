@@ -357,16 +357,36 @@ describe("Collector end-to-end flow (no DB)", () => {
 describe("Collector flow - additional branches", () => {
   const collectorId = "collector_X";
   const otherCollectorId = "collector_Y";
-  const adminToken = makeToken({ sub: "admin_X", roles: ["admin"], email: "admin@example.com" });
-  const collectorToken = makeToken({ sub: collectorId, roles: ["collector"], email: "collector@example.com" });
-  const otherCollectorToken = makeToken({ sub: otherCollectorId, roles: ["collector"], email: "other@example.com" });
+  const adminToken = makeToken({
+    sub: "admin_X",
+    roles: ["admin"],
+    email: "admin@example.com",
+  });
+  const collectorToken = makeToken({
+    sub: collectorId,
+    roles: ["collector"],
+    email: "collector@example.com",
+  });
+  const otherCollectorToken = makeToken({
+    sub: otherCollectorId,
+    roles: ["collector"],
+    email: "other@example.com",
+  });
 
   let b1;
 
   beforeEach(async () => {
     mem.bins.clear();
     mem.histories.length = 0;
-    b1 = (await binRepo.create({ _id: "bx1", code: "PUB-X1", fillLevelPercent: 87, status: "needs-collection", assignedCollector: collectorId })).toObject();
+    b1 = (
+      await binRepo.create({
+        _id: "bx1",
+        code: "PUB-X1",
+        fillLevelPercent: 87,
+        status: "needs-collection",
+        assignedCollector: collectorId,
+      })
+    ).toObject();
   });
 
   it("getBinByCode: unknown code -> 404", async () => {
@@ -397,7 +417,9 @@ describe("Collector flow - additional branches", () => {
       .post(`/api/collections/${b1._id}/start-session`)
       .set(auth(collectorToken))
       .expect(404);
-    expect((res.body.message || "").toLowerCase()).toMatch(/failed to start session/);
+    expect((res.body.message || "").toLowerCase()).toMatch(
+      /failed to start session/
+    );
     spy.mockRestore();
   });
 
