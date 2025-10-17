@@ -96,60 +96,99 @@ export default function SchedulePickup() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       <PageHeader
         title="Schedule Pickup"
         subtitle="Schedule waste collection pickups for your residence"
       />
 
-      <div className="space-y-6 mt-6">
+      <div className="space-y-8 mt-6">
         {/* Schedule Pickup Form */}
         <Card>
-          <div className="p-6">
-            <h2 className="text-xl font-semibold mb-6">Schedule Pickup</h2>
+          <div className="p-8">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Schedule New Pickup</h2>
+                <p className="text-sm text-gray-500">Fill in the details below to schedule your waste collection</p>
+              </div>
+            </div>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
-                {error}
+              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg flex items-start gap-3">
+                <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <span>{error}</span>
               </div>
             )}
 
             {success && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded">
-                {success}
+              <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-r-lg flex items-start gap-3">
+                <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span>{success}</span>
               </div>
             )}
 
-            <form onSubmit={onSubmit} className="space-y-4">
-              <Input
-                type="date"
-                name="date"
-                value={form.date}
-                onChange={onChange}
-                required
-                label="Select Date"
-                min={new Date().toISOString().split('T')[0]}
-              />
+            <form onSubmit={onSubmit} className="space-y-8">
+              {/* Date Selection */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
+                <div className="flex items-start gap-3 mb-4">
+                  <svg className="w-5 h-5 text-blue-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">When do you need pickup?</h3>
+                    <p className="text-sm text-gray-600">Choose a convenient date for waste collection</p>
+                  </div>
+                </div>
+                <Input
+                  type="date"
+                  name="date"
+                  value={form.date}
+                  onChange={onChange}
+                  required
+                  label="Pickup Date"
+                  min={new Date().toISOString().split('T')[0]}
+                  className="bg-white"
+                />
+              </div>
 
+              {/* Pickup Details */}
               <div>
-                <h3 className="text-base font-medium mb-4">Pickup Details</h3>
-                <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-6">
+                  <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Pickup Details</h3>
+                    <p className="text-sm text-gray-600">Tell us what you need collected</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Select
                     name="itemType"
                     value={form.itemType}
                     onChange={onChange}
                     required
-                    label="Select Item Type"
+                    label="Item Type"
                   >
                     <option value="">Select Item Type</option>
-                    <option value="Couch">Couch</option>
-                    <option value="Refrigerator">Refrigerator</option>
-                    <option value="Mattress">Mattress</option>
-                    <option value="TV">TV</option>
-                    <option value="Washing Machine">Washing Machine</option>
-                    <option value="Desk">Desk</option>
-                    <option value="Chair">Chair</option>
-                    <option value="Other">Other</option>
+                    <option value="Couch">🛋️ Couch</option>
+                    <option value="Refrigerator">❄️ Refrigerator</option>
+                    <option value="Mattress">🛏️ Mattress</option>
+                    <option value="TV">📺 TV</option>
+                    <option value="Washing Machine">🧺 Washing Machine</option>
+                    <option value="Desk">🪑 Desk</option>
+                    <option value="Chair">💺 Chair</option>
+                    <option value="Other">📦 Other</option>
                   </Select>
 
                   <Select
@@ -157,34 +196,57 @@ export default function SchedulePickup() {
                     value={form.itemWeight}
                     onChange={onChange}
                     required
-                    label="Select Item Weight"
+                    label="Item Size/Weight"
                   >
                     <option value="">Select Item Weight</option>
-                    <option value="Small">Small</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Large">Large</option>
-                    <option value="Extra Large">Extra Large</option>
+                    <option value="Small">Small (Easy to carry)</option>
+                    <option value="Medium">Medium (1-2 people)</option>
+                    <option value="Large">Large (2-3 people)</option>
+                    <option value="Extra Large">Extra Large (Special equipment)</option>
                   </Select>
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Any Notes For The Collectors
-                    </label>
-                    <textarea
-                      name="notes"
-                      value={form.notes}
-                      onChange={onChange}
-                      rows="4"
-                      placeholder="Any Notes For The Collectors"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                <div className="mt-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
+                    Additional Notes (Optional)
+                  </label>
+                  <textarea
+                    name="notes"
+                    value={form.notes}
+                    onChange={onChange}
+                    rows="4"
+                    placeholder="e.g., Item location, access instructions, special handling requirements..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">Help our collectors by providing specific details about item location or access</p>
                 </div>
               </div>
 
-              <div className="flex justify-end">
-                <Button type="submit" disabled={loading}>
-                  {loading ? 'Scheduling...' : 'Schedule Pickup'}
+              {/* Submit Button */}
+              <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Note:</span> You can cancel scheduled pickups anytime before collection
+                </p>
+                <Button type="submit" disabled={loading} className="min-w-[200px] shadow-lg">
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Scheduling...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Schedule Pickup
+                    </span>
+                  )}
                 </Button>
               </div>
             </form>
@@ -193,79 +255,167 @@ export default function SchedulePickup() {
 
         {/* Upcoming Pickups */}
         <Card>
-          <div className="p-6">
-            <h2 className="text-xl font-semibold mb-6">Upcoming Pickups</h2>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Item Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Item Size
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {pickups.length > 0 ? (
-                    pickups.map((pickup) => (
-                      <tr key={pickup._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatDate(pickup.date)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {pickup.itemType}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {pickup.itemWeight}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {getStatusBadge(pickup.status)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {pickup.status === 'scheduled' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleCancelPickup(pickup._id)}
-                              disabled={loading}
-                            >
-                              Cancel
-                            </Button>
-                          )}
-                          {pickup.status === 'cancelled' && (
-                            <span className="text-gray-400">-</span>
-                          )}
-                          {pickup.status === 'completed' && (
-                            <span className="text-gray-400">-</span>
-                          )}
-                          {pickup.status === 'in-progress' && (
-                            <span className="text-gray-400">In Progress</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
-                        No pickups scheduled yet.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+          <div className="p-8">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Your Pickups</h2>
+                  <p className="text-sm text-gray-500">View and manage your scheduled collections</p>
+                </div>
+              </div>
+              {pickups.length > 0 && (
+                <div className="px-4 py-2 bg-blue-50 rounded-lg">
+                  <span className="text-sm font-semibold text-blue-700">{pickups.length} Total</span>
+                </div>
+              )}
             </div>
+
+            {pickups.length > 0 ? (
+              <>
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-gray-50 to-gray-100">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          <div className="flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Date
+                          </div>
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          Item Type
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          Size
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {pickups.map((pickup) => (
+                        <tr key={pickup._id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-gray-900">{formatDate(pickup.date)}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-900 font-medium">{pickup.itemType}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-700">{pickup.itemWeight}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(pickup.status)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {pickup.status === 'scheduled' && (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => handleCancelPickup(pickup._id)}
+                                disabled={loading}
+                                className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
+                              >
+                                Cancel
+                              </Button>
+                            )}
+                            {pickup.status === 'cancelled' && (
+                              <span className="text-gray-400 text-xs">Cancelled</span>
+                            )}
+                            {pickup.status === 'completed' && (
+                              <span className="text-green-600 text-xs font-medium flex items-center gap-1">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                Done
+                              </span>
+                            )}
+                            {pickup.status === 'in-progress' && (
+                              <span className="text-blue-600 text-xs font-medium flex items-center gap-1">
+                                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                                On the way
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-4">
+                  {pickups.map((pickup) => (
+                    <div key={pickup._id} className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span className="text-sm font-semibold text-gray-900">{formatDate(pickup.date)}</span>
+                          </div>
+                          <p className="text-lg font-bold text-gray-800">{pickup.itemType}</p>
+                          <p className="text-sm text-gray-600 mt-1">Size: {pickup.itemWeight}</p>
+                        </div>
+                        <div>{getStatusBadge(pickup.status)}</div>
+                      </div>
+                      
+                      {pickup.notes && (
+                        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-600">{pickup.notes}</p>
+                        </div>
+                      )}
+
+                      {pickup.status === 'scheduled' && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleCancelPickup(pickup._id)}
+                          disabled={loading}
+                          className="w-full hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                        >
+                          Cancel Pickup
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-16">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No pickups scheduled</h3>
+                <p className="text-gray-500 mb-6">Schedule your first pickup using the form above</p>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg text-sm text-blue-700">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Schedule pickups at least 24 hours in advance
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </div>
