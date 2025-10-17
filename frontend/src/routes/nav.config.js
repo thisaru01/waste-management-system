@@ -26,7 +26,7 @@ export const NAV_ITEMS = [
     label: 'Collections',
     to: '/collections',
     icon: 'collection',
-    roles: ['authority', 'collector', 'admin'],
+    roles: ['authority', 'collector'],
   },
   // Authority-only quick access to pending collections
   {
