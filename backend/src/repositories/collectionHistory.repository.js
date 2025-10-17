@@ -21,6 +21,16 @@ export class CollectionHistoryRepository {
       .sort({ finishedAt: -1 })
       .lean();
   }
+
+  /**
+   * List all collection history (for authority)
+   */
+  async listAll() {
+    return CollectionHistory.find({})
+      .sort({ finishedAt: -1 })
+      .populate("collector", "firstName lastName email roles")
+      .lean();
+  }
 }
 
 export default new CollectionHistoryRepository();
